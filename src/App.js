@@ -19,7 +19,7 @@ class App extends Component {
           <tbody>
             {_.map(questions, (q, idx) => (
               <tr key={idx}>
-                <td onClick={() => this.clickQuestion(q)}>{q}</td>
+                <td>{q}</td>
               </tr>
             ))}
           </tbody>
@@ -37,16 +37,6 @@ class App extends Component {
   }
 
   /* Helpers. */
-
-  clickQuestion = (question) => {
-    fetch("/click-question", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json;charset=utf-8",
-      },
-      body: JSON.stringify({ question }),
-    });
-  };
 }
 
 export default App;

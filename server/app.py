@@ -22,24 +22,24 @@ def index():
 
 @app.route("/fetch-questions")
 def fetch_questions():
-
     return {"questions": ["He concocted the first potion.", "A hairy tomato."]}
 
 
-@app.route("/click-question", methods=["POST"])
-def click_question():
-    content = request.get_json()
-    question = content["question"]
-    executeAndCommit(
-        """
-        INSERT INTO ClickedQuestions(question) VALUES (?)
-            ON CONFLICT(question) DO UPDATE
-            SET numClicks = numClicks + 1
-        """,
-        (question,),
-    )
-    print(executeAndFetch("SELECT * FROM ClickedQuestions"))
-    return Response(status=200)
+## LEAVING HERE ONLY AS EXAMPLE. REMOVE ONCE A REAL EXAMPLE EXISTS.
+# @app.route("/click-question", methods=["POST"])
+# def click_question():
+#     content = request.get_json()
+#     question = content["question"]
+#     executeAndCommit(
+#         """
+#         INSERT INTO ClickedQuestions(question) VALUES (?)
+#             ON CONFLICT(question) DO UPDATE
+#             SET numClicks = numClicks + 1
+#         """,
+#         (question,),
+#     )
+#     print(executeAndFetch("SELECT * FROM ClickedQuestions"))
+#     return Response(status=200)
 
 
 #####
@@ -57,14 +57,9 @@ def init_db():
         print("No database to clear.")
         pass
 
-    executeAndCommit(
-        """
-        CREATE TABLE ClickedQuestions (
-            question TEXT PRIMARY KEY,
-            numClicks INTEGER DEFAULT 1
-        );
-        """
-    )
+    with open("schema.sql", "r") as f:
+        schemaCreationSqlScript = f.read()
+        executeScriptAndCommit(schemaCreationSqlScript)
 
 
 @app.teardown_appcontext
@@ -93,7 +88,7 @@ def getDbConn():
 
 
 def executeAndCommit(*executeArgs):
-    """Execute a SQL command and commit it to the db.
+    """Execute a SQL command and commit to the db.
 
     :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
         string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
@@ -102,6 +97,19 @@ def executeAndCommit(*executeArgs):
     dbConn = getDbConn()
     cur = dbConn.cursor()
     cur.execute(*executeArgs)
+    dbConn.commit()
+
+
+def executeScriptAndCommit(*executeScriptArgs):
+    """Execute a SQL script (multiple SQL commands) and commit to the db.
+
+    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
+        string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
+        something that writes to the db.
+    """
+    dbConn = getDbConn()
+    cur = dbConn.cursor()
+    cur.executescript(*executeScriptArgs)
     dbConn.commit()
 
 
