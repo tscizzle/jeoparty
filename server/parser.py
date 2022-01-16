@@ -1,4 +1,3 @@
-import re
 import requests
 from bs4 import BeautifulSoup
 
@@ -19,8 +18,13 @@ class Jeoparty:
                 clue_value_daily_double_html = single_row_data.find('td', {'class': 'clue_value_daily_double'})
                 if clue_value_daily_double_html:
                     is_daily_double = True
-                clue_text = single_row_data.find('td', {'class': 'clue_text'}).text
-                answer_text = BeautifulSoup(single_row_data.find('div')['onmouseover'], 'lxml').find('em', {'class': 'correct_response'}).text
+                clue_html = single_row_data.find('td', {'class': 'clue_text'})
+                if clue_html:
+                    clue_text = clue_html.text
+                    answer_text = BeautifulSoup(single_row_data.find('div')['onmouseover'], 'lxml').find('em', {'class': 'correct_response'}).text
+                else:
+                    clue_text = "Oops! The J-archive databatase doesn\n't have this question."
+                    answer_text = None
                 all_clue_text.append(
                     {
                         'clue': clue_text,
@@ -29,15 +33,19 @@ class Jeoparty:
                 })
         return all_clue_text
 
-    def get_ordered_dollar_values(self, is_double_jeop):
-        if is_double_jeop:
-            return [400, 800, 1200, 1600, 2000]
-        else:
-            return [200, 400, 600, 800, 1000]
+    def get_ordered_dollar_values(self, all_rows):
+        all_dollar_values = []
+        for row in all_rows[1:]:
+            all_row_data = row.find_all('td', recursive=False)
+            for single_row_data in all_row_data:
+                clue_value_html = single_row_data.find('td', {'class': 'clue_value'})
+                if clue_value_html:
+                    all_dollar_values.append(int(clue_value_html.text[1:]))  # Remove the $ and convert to int
+        return list(set(all_dollar_values))
 
-    def initialize_category_dict(self, category_names, is_double_jeop):
+    def initialize_category_dict(self, category_names, rows, is_double_jeop):
         category_dict = {}
-        dollar_values = self.get_ordered_dollar_values(is_double_jeop)
+        dollar_values = self.get_ordered_dollar_values(rows)
         for name in category_names:
             category_dict[name] = {}
             for dollar_value in dollar_values:
@@ -50,9 +58,9 @@ class Jeoparty:
         rows = clue_table.find_all('tr', recursive=False)
         category_names = self.get_category_names(rows[0])
         all_clue_text = self.get_all_clue_text(rows)
-        category_dict = self.initialize_category_dict(category_names, is_double_jeop=is_double_jeop)
+        category_dict = self.initialize_category_dict(category_names, rows, is_double_jeop=is_double_jeop)
         clue_index = 0
-        for dollar_value in self.get_ordered_dollar_values(is_double_jeop):
+        for dollar_value in self.get_ordered_dollar_values(rows):
             for category_name in category_dict.keys():
                 print(category_name)
                 category_dict[category_name][dollar_value] = all_clue_text[clue_index]
@@ -72,7 +80,7 @@ class Jeoparty:
             'final_answer': final_answer}
 
     def parse(self):
-        url = 'https://www.j-archive.com/showgame.php?game_id=4544'
+        url = 'https://www.j-archive.com/showgame.php?game_id=6975'
         html = requests.get(url).content
         soup = BeautifulSoup(html, 'lxml')
         game_title = soup.find('div', {'id': 'game_title'}).find('h1').text
@@ -91,6 +99,7 @@ class Jeoparty:
             'double_jeop_dict': double_jeop_dict,
             'final_dict': final_dict
         }
+
 
 if __name__ == '__main__':
     Jeoparty().parse()
