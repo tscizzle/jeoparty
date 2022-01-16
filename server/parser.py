@@ -9,7 +9,6 @@ class Jeoparty:
         html = requests.get(all_seasons_url).content
         soup = BeautifulSoup(html, 'lxml')
         season_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
-        episode_data = []
         random_season_html_url = random.choice(season_html_urls)
 
         season_url = f"https://www.j-archive.com/{random_season_html_url.get('href')}"
@@ -102,10 +101,8 @@ class Jeoparty:
             'final_answer': final_answer}
 
     def parse(self):
-        avail_episodes = self.choose_random_episode()
-
-        url = 'https://www.j-archive.com/showgame.php?game_id=6975'
-        html = requests.get(url).content
+        random_episode = self.choose_random_episode()
+        html = requests.get(random_episode['url']).content
         soup = BeautifulSoup(html, 'lxml')
         game_title = soup.find('div', {'id': 'game_title'}).find('h1').text
         single_jeop_dict = self.get_category_dict(soup, is_double_jeop=False)
