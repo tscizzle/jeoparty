@@ -25,6 +25,7 @@ class App extends Component {
             ))}
           </tbody>
         </table>
+        <button onClick={this.initGame}>Init Game</button>
       </div>
     );
   }
@@ -36,6 +37,10 @@ class App extends Component {
   }
 
   /* Helpers. */
+
+  initGame = () => {
+    api.initGame();
+  };
 }
 
 export default App;

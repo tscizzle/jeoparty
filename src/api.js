@@ -54,8 +54,13 @@ const getQuestions = () => {
   return niceGET("/get-questions");
 };
 
+const initGame = () => {
+  return niceGET("/init-game");
+};
+
 const api = {
   getQuestions,
+  initGame,
 };
 
 export default api;
