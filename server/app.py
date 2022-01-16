@@ -18,6 +18,20 @@ def index():
     return "TODO: put the build/ directory's index.html here"
 
 
+@app.route("/get-player-by-client-id/<clientId>")
+def get_player_by_client_id(clientId):
+    ## TODO: do a SELECT from the ClientCookie table where client_id = clientId and get
+    ##      a player dict that has a key for all the columns ("id", "room_id", "name").
+    ##      If no row exists with that client_id, set player var to None.
+    player = {"id": 12, "room_id": None, "name": "beans"}
+    ## Setting a dummy player for now.
+
+    if player is None:
+        return Response(status=404)
+
+    return {"player": player}
+
+
 @app.route("/get-questions")
 def get_questions():
     return {"questions": ["He concocted the first potion.", "A hairy tomato."]}
