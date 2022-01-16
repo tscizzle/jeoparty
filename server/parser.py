@@ -1,28 +1,29 @@
+import random
 import requests
 from bs4 import BeautifulSoup
 
 
 class Jeoparty:
-    def get_all_episode_data(self):
+    def choose_random_episode(self):
         all_seasons_url = 'https://www.j-archive.com/listseasons.php'
         html = requests.get(all_seasons_url).content
         soup = BeautifulSoup(html, 'lxml')
         season_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
         episode_data = []
-        for html_url in season_html_urls:
-            season_url = f"https://www.j-archive.com/{html_url.get('href')}"
-            single_season_html = requests.get(season_url).content
-            soup = BeautifulSoup(single_season_html, 'lxml')
-            episode_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
-            for episode_html_url in episode_html_urls:
-                episode_url = episode_html_url.get('href')
-                if 'j-archive.com/showgame' in episode_url:
-                    episode_data.append(
-                        {
-                            'url': episode_html_url.get('href'),
-                            'taped': episode_html_url['title'] if 'title' in episode_html_url.attrs else None
-                        })
-        return episode_data
+        random_season_html_url = random.choice(season_html_urls)
+
+        season_url = f"https://www.j-archive.com/{random_season_html_url.get('href')}"
+        single_season_html = requests.get(season_url).content
+        soup = BeautifulSoup(single_season_html, 'lxml')
+        episode_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
+        valid_episode_html_urls = [html for html in episode_html_urls if 'j-archive.com/showgame' in html.get('href')]
+        random_episode_html_url = random.choice(valid_episode_html_urls)
+        episode_url = random_episode_html_url.get('href')
+        if 'j-archive.com/showgame' in episode_url:
+            return{
+                    'url': random_episode_html_url.get('href'),
+                    'taped': random_episode_html_url['title'] if 'title' in random_episode_html_url.attrs else None
+                }
 
     def get_category_names(self, first_row):
         category_names = []
@@ -101,7 +102,7 @@ class Jeoparty:
             'final_answer': final_answer}
 
     def parse(self):
-        avail_episodes = self.get_all_episode_data()
+        avail_episodes = self.choose_random_episode()
 
         url = 'https://www.j-archive.com/showgame.php?game_id=6975'
         html = requests.get(url).content
