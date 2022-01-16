@@ -20,8 +20,8 @@ def index():
     return "TODO: put the build/ directory's index.html here"
 
 
-@app.route("/fetch-questions")
-def fetch_questions():
+@app.route("/get-questions")
+def get_questions():
     return {"questions": ["He concocted the first potion.", "A hairy tomato."]}
 
 
@@ -49,17 +49,19 @@ def fetch_questions():
 
 @app.before_first_request
 def init_db():
+    print("Clearing database...")
     try:
-        print("Clearing database...")
         os.remove(DB_PATH)
         print("Cleared database.")
     except OSError:
-        print("No database to clear.")
         pass
+        print("No database to clear.")
 
+    print("Creating database...")
     with open("schema.sql", "r") as f:
         schemaCreationSqlScript = f.read()
         executeScriptAndCommit(schemaCreationSqlScript)
+    print("Created database.")
 
 
 @app.teardown_appcontext

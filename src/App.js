@@ -1,6 +1,7 @@
 import React, { Component } from "react";
-
 import _ from "lodash";
+
+import api from "api";
 
 import "./App.scss";
 
@@ -29,11 +30,9 @@ class App extends Component {
   }
 
   componentDidMount() {
-    fetch("/fetch-questions")
-      .then((res) => res.json())
-      .then((res) => {
-        this.setState({ questions: res.questions });
-      });
+    api.getQuestions().then(({ questions }) => {
+      this.setState({ questions });
+    });
   }
 
   /* Helpers. */
