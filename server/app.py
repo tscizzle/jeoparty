@@ -25,6 +25,13 @@ def get_questions():
     return {"questions": ["He concocted the first potion.", "A hairy tomato."]}
 
 
+@app.route("/init-game")
+def init_game():
+    ## TODO: fetch clues and ish from jarchive and populate debbie (source game,
+    ##      category, clue)
+    return Response(status=404)
+
+
 ## LEAVING HERE ONLY AS EXAMPLE. REMOVE ONCE A REAL EXAMPLE EXISTS.
 # @app.route("/click-question", methods=["POST"])
 # def click_question():
