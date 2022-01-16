@@ -1,0 +1,96 @@
+import re
+import requests
+from bs4 import BeautifulSoup
+
+
+class Jeoparty:
+    def get_category_names(self, first_row):
+        category_names = []
+        for single_row_data in first_row.find_all('td', recursive=False):
+            category_names.append(single_row_data.find('td', {'class': 'category_name'}).text)
+        return category_names
+
+    def get_all_clue_text(self, all_rows):
+        all_clue_text = []
+        for row in all_rows[1:]:
+            all_row_data = row.find_all('td', recursive=False)
+            for single_row_data in all_row_data:
+                is_daily_double = False
+                clue_value_daily_double_html = single_row_data.find('td', {'class': 'clue_value_daily_double'})
+                if clue_value_daily_double_html:
+                    is_daily_double = True
+                clue_text = single_row_data.find('td', {'class': 'clue_text'}).text
+                answer_text = BeautifulSoup(single_row_data.find('div')['onmouseover'], 'lxml').find('em', {'class': 'correct_response'}).text
+                all_clue_text.append(
+                    {
+                        'clue': clue_text,
+                        'answer': answer_text,
+                        'is_daily_double': is_daily_double
+                })
+        return all_clue_text
+
+    def get_ordered_dollar_values(self, is_double_jeop):
+        if is_double_jeop:
+            return [400, 800, 1200, 1600, 2000]
+        else:
+            return [200, 400, 600, 800, 1000]
+
+    def initialize_category_dict(self, category_names, is_double_jeop):
+        category_dict = {}
+        dollar_values = self.get_ordered_dollar_values(is_double_jeop)
+        for name in category_names:
+            category_dict[name] = {}
+            for dollar_value in dollar_values:
+                category_dict[name][dollar_value] = None
+        return category_dict
+
+    def get_category_dict(self, soup, is_double_jeop):
+        round_name = 'double_jeopardy_round' if is_double_jeop else 'jeopardy_round'
+        clue_table = soup.find('div', {'id': round_name}).find('table', {'class': 'round'})
+        rows = clue_table.find_all('tr', recursive=False)
+        category_names = self.get_category_names(rows[0])
+        all_clue_text = self.get_all_clue_text(rows)
+        category_dict = self.initialize_category_dict(category_names, is_double_jeop=is_double_jeop)
+        clue_index = 0
+        for dollar_value in self.get_ordered_dollar_values(is_double_jeop):
+            for category_name in category_dict.keys():
+                print(category_name)
+                category_dict[category_name][dollar_value] = all_clue_text[clue_index]
+                clue_index += 1
+        return category_dict
+
+    def get_final_dict(self, soup):
+        clue_table = soup.find('div', {'id': 'final_jeopardy_round'}).find('table', {'class': 'final_round'})
+        category_name = clue_table.find('td', {'class': 'category_name'}).text
+        clue_text = clue_table.find('td', {'class': 'clue_text'}).text
+        answer_html_str = str(BeautifulSoup(clue_table.find('div')['onmouseover'], 'lxml'))
+        answer_html_str_bw_parens = answer_html_str[answer_html_str.find("(")+1:answer_html_str.rfind(")")]
+        final_answer = BeautifulSoup(answer_html_str_bw_parens, 'lxml').find('html').find('em', {'class': '\\"correct_response\\"'}).text
+        return {
+            'category_name': category_name,
+            'clue_text': clue_text,
+            'final_answer': final_answer}
+
+    def parse(self):
+        url = 'https://www.j-archive.com/showgame.php?game_id=4544'
+        html = requests.get(url).content
+        soup = BeautifulSoup(html, 'lxml')
+        game_title = soup.find('div', {'id': 'game_title'}).find('h1').text
+        single_jeop_dict = self.get_category_dict(soup, is_double_jeop=False)
+        double_jeop_dict = self.get_category_dict(soup, is_double_jeop=True)
+        final_dict = self.get_final_dict(soup)
+        print({
+            'game_title': game_title,
+            'single_jeop_dict': single_jeop_dict,
+            'double_jeop_dict': double_jeop_dict,
+            'final_dict': final_dict
+        })
+        return {
+            'game_title': game_title,
+            'single_jeop_dict': single_jeop_dict,
+            'double_jeop_dict': double_jeop_dict,
+            'final_dict': final_dict
+        }
+
+if __name__ == '__main__':
+    Jeoparty().parse()
