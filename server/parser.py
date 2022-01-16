@@ -3,6 +3,27 @@ from bs4 import BeautifulSoup
 
 
 class Jeoparty:
+    def get_all_episode_data(self):
+        all_seasons_url = 'https://www.j-archive.com/listseasons.php'
+        html = requests.get(all_seasons_url).content
+        soup = BeautifulSoup(html, 'lxml')
+        season_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
+        episode_data = []
+        for html_url in season_html_urls:
+            season_url = f"https://www.j-archive.com/{html_url.get('href')}"
+            single_season_html = requests.get(season_url).content
+            soup = BeautifulSoup(single_season_html, 'lxml')
+            episode_html_urls = soup.find('div', {'id': 'content'}).findAll('a')
+            for episode_html_url in episode_html_urls:
+                episode_url = episode_html_url.get('href')
+                if 'j-archive.com/showgame' in episode_url:
+                    episode_data.append(
+                        {
+                            'url': episode_html_url.get('href'),
+                            'taped': episode_html_url['title'] if 'title' in episode_html_url.attrs else None
+                        })
+        return episode_data
+
     def get_category_names(self, first_row):
         category_names = []
         for single_row_data in first_row.find_all('td', recursive=False):
@@ -80,6 +101,8 @@ class Jeoparty:
             'final_answer': final_answer}
 
     def parse(self):
+        avail_episodes = self.get_all_episode_data()
+
         url = 'https://www.j-archive.com/showgame.php?game_id=6975'
         html = requests.get(url).content
         soup = BeautifulSoup(html, 'lxml')
