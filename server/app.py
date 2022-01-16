@@ -1,4 +1,4 @@
-from flask import Flask, g, request
+from flask import Flask, g, request, Response
 
 import os
 
@@ -22,15 +22,24 @@ def index():
 
 @app.route("/fetch-questions")
 def fetch_questions():
+
     return {"questions": ["He concocted the first potion.", "A hairy tomato."]}
 
 
 @app.route("/click-question", methods=["POST"])
 def click_question():
-    print(request.is_json)
     content = request.get_json()
-    print(content)
-    return content
+    question = content["question"]
+    executeAndCommit(
+        """
+        INSERT INTO ClickedQuestions(question) VALUES (?)
+            ON CONFLICT(question) DO UPDATE
+            SET numClicks = numClicks + 1
+        """,
+        (question,),
+    )
+    print(executeAndFetch("SELECT * FROM ClickedQuestions"))
+    return Response(status=200)
 
 
 #####
@@ -39,7 +48,7 @@ def click_question():
 
 
 @app.before_first_request
-def clear_state_db():
+def init_db():
     try:
         print("Clearing state database...")
         os.remove("state.db")
@@ -47,6 +56,15 @@ def clear_state_db():
     except OSError:
         print("No state database to clear.")
         pass
+
+    executeAndCommit(
+        """
+        CREATE TABLE ClickedQuestions (
+            question TEXT PRIMARY KEY,
+            numClicks INTEGER DEFAULT 1
+        );
+        """
+    )
 
 
 @app.teardown_appcontext
@@ -61,8 +79,43 @@ def close_connection(exception):
 #####
 
 
-def get_state_db():
+def getStateDB():
+    """Get this Flask app's connection to our SQLite db for app state.
+        - If such a connection already exists, use the existing one.
+        - If not, create a connection.
+
+    :return sqlite3.Connection:
+    """
     db = getattr(g, "_state_database", None)
     if db is None:
         db = g._state_database = sqlite3.connect(STATE_DATABASE)
     return db
+
+
+def executeAndCommit(*executeArgs):
+    """Execute a SQL command and commit it to the db.
+
+    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
+        string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
+        something that writes to the db.
+    """
+    db = getStateDB()
+    cur = db.cursor()
+    cur.execute(*executeArgs)
+    db.commit()
+
+
+def executeAndFetch(*executeArgs):
+    """Execute a SQL query and fetch the results.
+
+    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
+        string, second is tuple if SQL args). SQL string is probs a SELECT or something
+        that reads from the db.
+
+    :return list:
+    """
+    db = getStateDB()
+    cur = db.cursor()
+    cur.execute(*executeArgs)
+    results = cur.fetchall()
+    return results
