@@ -4,7 +4,7 @@ import os
 
 import sqlite3
 
-STATE_DATABASE = "state.db"
+DB_PATH = "jeoparty.db"
 
 
 app = Flask(__name__)
@@ -50,11 +50,11 @@ def click_question():
 @app.before_first_request
 def init_db():
     try:
-        print("Clearing state database...")
-        os.remove("state.db")
-        print("Cleared state database.")
+        print("Clearing database...")
+        os.remove(DB_PATH)
+        print("Cleared database.")
     except OSError:
-        print("No state database to clear.")
+        print("No database to clear.")
         pass
 
     executeAndCommit(
@@ -69,27 +69,27 @@ def init_db():
 
 @app.teardown_appcontext
 def close_connection(exception):
-    db = getattr(g, "_state_database", None)
-    if db is not None:
-        db.close()
+    dbConn = getDbConn()
+    if dbConn is not None:
+        dbConn.close()
 
 
 #####
-## State Database Helpers
+## Database Helpers
 #####
 
 
-def getStateDB():
-    """Get this Flask app's connection to our SQLite db for app state.
+def getDbConn():
+    """Get this Flask app's connection to our SQLite db.
         - If such a connection already exists, use the existing one.
         - If not, create a connection.
 
     :return sqlite3.Connection:
     """
-    db = getattr(g, "_state_database", None)
-    if db is None:
-        db = g._state_database = sqlite3.connect(STATE_DATABASE)
-    return db
+    dbConn = getattr(g, "_database", None)
+    if dbConn is None:
+        dbConn = g._database = sqlite3.connect(DB_PATH)
+    return dbConn
 
 
 def executeAndCommit(*executeArgs):
@@ -99,10 +99,10 @@ def executeAndCommit(*executeArgs):
         string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
         something that writes to the db.
     """
-    db = getStateDB()
-    cur = db.cursor()
+    dbConn = getDbConn()
+    cur = dbConn.cursor()
     cur.execute(*executeArgs)
-    db.commit()
+    dbConn.commit()
 
 
 def executeAndFetch(*executeArgs):
@@ -114,8 +114,8 @@ def executeAndFetch(*executeArgs):
 
     :return list:
     """
-    db = getStateDB()
-    cur = db.cursor()
+    dbConn = getDbConn()
+    cur = dbConn.cursor()
     cur.execute(*executeArgs)
     results = cur.fetchall()
     return results
