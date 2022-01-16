@@ -2,9 +2,7 @@ from flask import Flask, g, request, Response
 
 import os
 
-import sqlite3
-
-DB_PATH = "jeoparty.db"
+from db import JeopartyDb
 
 
 app = Flask(__name__)
@@ -56,83 +54,31 @@ def init_game():
 
 @app.before_first_request
 def init_db():
-    print("Clearing database...")
-    try:
-        os.remove(DB_PATH)
-        print("Cleared database.")
-    except OSError:
-        pass
-        print("No database to clear.")
-
-    print("Creating database...")
-    with open("schema.sql", "r") as f:
-        schemaCreationSqlScript = f.read()
-        executeScriptAndCommit(schemaCreationSqlScript)
-    print("Created database.")
+    JeopartyDb.clearAll()
+    db = getDb()
+    db.createTables()
 
 
 @app.teardown_appcontext
 def close_connection(exception):
-    dbConn = getDbConn()
-    if dbConn is not None:
-        dbConn.close()
+    db = getDb()
+    if db is not None:
+        db.close()
 
 
 #####
-## Database Helpers
+## Misc Helpers
 #####
 
 
-def getDbConn():
-    """Get this Flask app's connection to our SQLite db.
-        - If such a connection already exists, use the existing one.
-        - If not, create a connection.
+def getDb():
+    """Get this Flask app's db object which represents a connection to our SQLite db.
+        - If such an object already exists, use the existing one.
+        - If not, create one (which opens a connection).
 
-    :return sqlite3.Connection:
+    :return JeopartyDb:
     """
-    dbConn = getattr(g, "_database", None)
-    if dbConn is None:
-        dbConn = g._database = sqlite3.connect(DB_PATH)
-    return dbConn
-
-
-def executeAndCommit(*executeArgs):
-    """Execute a SQL command and commit to the db.
-
-    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
-        string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
-        something that writes to the db.
-    """
-    dbConn = getDbConn()
-    cur = dbConn.cursor()
-    cur.execute(*executeArgs)
-    dbConn.commit()
-
-
-def executeScriptAndCommit(*executeScriptArgs):
-    """Execute a SQL script (multiple SQL commands) and commit to the db.
-
-    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
-        string, second is tuple if SQL args). SQL string is probs an INSERT or UPDATE or
-        something that writes to the db.
-    """
-    dbConn = getDbConn()
-    cur = dbConn.cursor()
-    cur.executescript(*executeScriptArgs)
-    dbConn.commit()
-
-
-def executeAndFetch(*executeArgs):
-    """Execute a SQL query and fetch the results.
-
-    :params *executeArgs: Same params as sqlite3.Cursor.execute (first param is SQL
-        string, second is tuple if SQL args). SQL string is probs a SELECT or something
-        that reads from the db.
-
-    :return list:
-    """
-    dbConn = getDbConn()
-    cur = dbConn.cursor()
-    cur.execute(*executeArgs)
-    results = cur.fetchall()
-    return results
+    db = getattr(g, "_database", None)
+    if db is None:
+        db = g._database = JeopartyDb()
+    return db
