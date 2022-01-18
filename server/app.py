@@ -1,6 +1,4 @@
-from flask import Flask, g, request, Response
-
-import os
+from flask import Flask, g, Response
 
 from db import JeopartyDb
 
@@ -20,15 +18,19 @@ def index():
 
 @app.route("/get-player-by-client-id/<clientId>")
 def get_player_by_client_id(clientId):
-    ## TODO: do a SELECT from the ClientCookie table where client_id = clientId and get
-    ##      a player dict that has a key for all the columns ("id", "room_id", "name").
-    ##      If no row exists with that client_id, set player var to None.
-    player = {"id": 12, "room_id": None, "name": "beans"}
-    ## Setting a dummy player for now.
+    # For the clientId saved as a cookie in someone's browser, find the existing Player
+    # in the db.
+    db = getDb()
+    playerQuery = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
+    player = db.executeAndFetch(playerQuery, (clientId,), doFetchOne=True)
 
+    # If no Player exists yet with that clientId, create a Player with it.
     if player is None:
-        return Response(status=404)
+        playerInsertQuery = f"INSERT INTO {JeopartyDb.PLAYER} (client_id) VALUES (?);"
+        db.executeAndCommit(playerInsertQuery, (clientId,))
+        player = db.executeAndFetch(playerQuery, (clientId,), doFetchOne=True)
 
+    # Send back the Player that was either found or created.
     return {"player": player}
 
 
@@ -42,23 +44,6 @@ def init_game():
     ## TODO: fetch clues and ish from jarchive and populate debbie (source game,
     ##      category, clue)
     return Response(status=404)
-
-
-## LEAVING HERE ONLY AS EXAMPLE. REMOVE ONCE A REAL EXAMPLE EXISTS.
-# @app.route("/click-question", methods=["POST"])
-# def click_question():
-#     content = request.get_json()
-#     question = content["question"]
-#     executeAndCommit(
-#         """
-#         INSERT INTO ClickedQuestions(question) VALUES (?)
-#             ON CONFLICT(question) DO UPDATE
-#             SET numClicks = numClicks + 1
-#         """,
-#         (question,),
-#     )
-#     print(executeAndFetch("SELECT * FROM ClickedQuestions"))
-#     return Response(status=200)
 
 
 #####
@@ -76,8 +61,7 @@ def init_db():
 @app.teardown_appcontext
 def close_connection(exception):
     db = getDb()
-    if db is not None:
-        db.close()
+    db.close()
 
 
 #####

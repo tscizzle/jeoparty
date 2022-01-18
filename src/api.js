@@ -27,6 +27,7 @@ const getJSONHeaders = () => {
   };
 };
 
+// eslint-disable-next-line
 const nicePOST = (path, body) => {
   return niceFetchJSON(path, {
     method: "POST",
@@ -37,6 +38,7 @@ const nicePOST = (path, body) => {
 
 /* Transforming */
 
+// eslint-disable-next-line
 const dateify = ({ obj, dateFieldPaths }) => {
   const newObj = _.cloneDeep(obj);
   _.each(dateFieldPaths, (path) => {
