@@ -1,7 +1,5 @@
 import _ from "lodash";
 
-import { getClientIdCookie } from "misc-helpers";
-
 /* Fetching */
 
 export const NICE_SERVER_URL = window.location.origin;
@@ -55,22 +53,21 @@ const dateify = ({ obj, dateFieldPaths }) => {
 /* API Calls */
 
 const getCurrentPlayer = () => {
-  const clientId = getClientIdCookie();
-  return niceGET(`/get-player-by-client-id/${clientId}`);
+  return niceGET(`/get-current-player`);
 };
 
-const getQuestions = () => {
-  return niceGET("/get-questions");
+const getCurrentRoom = () => {
+  return niceGET(`/get-current-room`);
 };
 
-const initGame = () => {
-  return niceGET("/init-game");
+const createRoom = () => {
+  return niceGET("/create-room");
 };
 
 const api = {
   getCurrentPlayer,
-  getQuestions,
-  initGame,
+  getCurrentRoom,
+  createRoom,
 };
 
 export default api;

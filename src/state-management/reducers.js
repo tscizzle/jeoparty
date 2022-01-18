@@ -1,6 +1,8 @@
 import {
   FETCH_CURRENT_PLAYER_SUCCESS,
   FETCH_CURRENT_PLAYER_FAILURE,
+  FETCH_CURRENT_ROOM_SUCCESS,
+  FETCH_CURRENT_ROOM_FAILURE,
 } from "state-management/actions";
 
 const getInitialState = () => ({
@@ -34,6 +36,20 @@ const mainReducer = (state = getInitialState(), action) => {
         ...state,
         currentPlayer: null,
         hasAttemptedFetchCurrentPlayer: true,
+      };
+      break;
+    case FETCH_CURRENT_ROOM_SUCCESS:
+      newState = {
+        ...state,
+        currentRoom: action.room,
+        hasAttemptedFetchCurrentRoom: true,
+      };
+      break;
+    case FETCH_CURRENT_ROOM_FAILURE:
+      newState = {
+        ...state,
+        currentRoom: null,
+        hasAttemptedFetchCurrentRoom: true,
       };
       break;
     default:

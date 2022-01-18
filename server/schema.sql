@@ -1,14 +1,14 @@
 CREATE TABLE player (
     id INTEGER PRIMARY KEY,
+    client_id INTEGER UNIQUE NOT NULL,
     room_id INTEGER,  -- foreign key
-    client_id INTEGER UNIQUE,
     name TEXT,
     FOREIGN KEY(room_id) REFERENCES room(id)
 );
 
 CREATE TABLE room (
     id INTEGER PRIMARY KEY,
-    source_game_id INTEGER,  -- foreign key
+    source_game_id INTEGER NOT NULL,  -- foreign key
     room_code TEXT NOT NULL,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
 );
@@ -16,7 +16,7 @@ CREATE TABLE room (
 CREATE TABLE source_game (
     id INTEGER PRIMARY KEY,
     date TIMESTAMP NOT NULL,
-    jarchive_id TEXT NOT NULL
+    jarchive_id TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE category (
