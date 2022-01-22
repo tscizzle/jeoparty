@@ -26,13 +26,13 @@ def get_current_player():
     db = get_db()
     player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
     client_id = get_client_id_from_cookie(request)
-    player_row = db.executeAndFetch(player_query, (client_id,), doFetchOne=True)
+    player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
 
     # If no Player exists yet with that client_id, create a Player with it.
     if player_row is None:
         player_insert_query = f"INSERT INTO {JeopartyDb.PLAYER} (client_id) VALUES (?);"
-        db.executeAndCommit(player_insert_query, (client_id,))
-        player_row = db.executeAndFetch(player_query, (client_id,), doFetchOne=True)
+        db.execute_and_commit(player_insert_query, (client_id,))
+        player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
 
     # Send back the Player that was either found or created.
     player = dict(player_row)
@@ -46,14 +46,14 @@ def get_current_room():
     db = get_db()
     player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
     client_id = get_client_id_from_cookie(request)
-    player_row = db.executeAndFetch(player_query, (client_id,), doFetchOne=True)
+    player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
 
     # Get the Room associated with that Player (if there is such a Room).
     room_row = None
     if player_row is not None and player_row["room_id"] is not None:
         room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
         room_id = player_row["room_id"]
-        room_row = db.executeAndFetch(room_query, (room_id,), doFetchOne=True)
+        room_row = db.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
 
     # Send back the Room.
     room = dict(room_row) if room_row is not None else None
@@ -75,18 +75,18 @@ def create_room():
     db = get_db()
     room_code = generate_room_code()
     source_game_query = f"SELECT id FROM {JeopartyDb.SOURCE_GAME} WHERE jarchive_id = ?;"
-    source_game = db.executeAndFetch(source_game_query, (jarchive_id,), doFetchOne=True)
+    source_game = db.execute_and_fetch(source_game_query, (jarchive_id,), do_fetch_one=True)
     room_insert_query = (
         f"INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code) VALUES (?, ?);"
     )
-    room_id = db.executeAndCommit(room_insert_query, (source_game["id"], room_code))
+    room_id = db.execute_and_commit(room_insert_query, (source_game["id"], room_code))
 
     # Update the current Player to be in the new Room.
     client_id = get_client_id_from_cookie(request)
     player_update_query = (
         f"UPDATE {JeopartyDb.PLAYER} SET room_id = ? WHERE client_id = ?;"
     )
-    db.executeAndCommit(player_update_query, (room_id, client_id))
+    db.execute_and_commit(player_update_query, (room_id, client_id))
 
     return {"success": True}
 
@@ -98,9 +98,9 @@ def create_room():
 
 @app.before_first_request
 def setup():
-    JeopartyDb.clearAll()
+    JeopartyDb.clear_all()
     db = get_db()
-    db.createTables()
+    db.create_tables()
 
 
 @app.teardown_appcontext
