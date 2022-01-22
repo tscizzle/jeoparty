@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class Jeoparty:
+class JarchiveParser:
     def choose_random_episode(self):
         all_seasons_url = 'https://www.j-archive.com/listseasons.php'
         html = requests.get(all_seasons_url).content
@@ -20,7 +20,8 @@ class Jeoparty:
         episode_url = random_episode_html_url.get('href')
         if 'j-archive.com/showgame' in episode_url:
             return{
-                    'url': random_episode_html_url.get('href'),
+                    'jarchive_id': episode_url.split('?game_id=')[-1],
+                    'url': episode_url,
                     'taped': random_episode_html_url['title'] if 'title' in random_episode_html_url.attrs else None
                 }
 
@@ -83,7 +84,6 @@ class Jeoparty:
         clue_index = 0
         for dollar_value in self.get_ordered_dollar_values(rows):
             for category_name in category_dict.keys():
-                print(category_name)
                 category_dict[category_name][dollar_value] = all_clue_text[clue_index]
                 clue_index += 1
         return category_dict
@@ -108,19 +108,10 @@ class Jeoparty:
         single_jeop_dict = self.get_category_dict(soup, is_double_jeop=False)
         double_jeop_dict = self.get_category_dict(soup, is_double_jeop=True)
         final_dict = self.get_final_dict(soup)
-        print({
-            'game_title': game_title,
-            'single_jeop_dict': single_jeop_dict,
-            'double_jeop_dict': double_jeop_dict,
-            'final_dict': final_dict
-        })
         return {
             'game_title': game_title,
+            'episode_details': random_episode,
             'single_jeop_dict': single_jeop_dict,
             'double_jeop_dict': double_jeop_dict,
             'final_dict': final_dict
         }
-
-
-if __name__ == '__main__':
-    Jeoparty().parse()
