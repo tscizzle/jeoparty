@@ -36,7 +36,7 @@ class App extends Component {
       <div>
         <h1>Join Room</h1>
         <input
-          placeholder="code"
+          placeholder="ROOM CODE"
           value={typedRoomCode}
           onChange={this.onChangeTypedRoomCode}
         />
@@ -103,7 +103,7 @@ class App extends Component {
   /* Helpers. */
 
   onChangeTypedRoomCode = (evt) => {
-    this.setState({ typedRoomCode: evt.target.value });
+    this.setState({ typedRoomCode: evt.target.value.toUpperCase() });
   };
 
   createRoom = () => {
