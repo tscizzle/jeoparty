@@ -34,8 +34,8 @@ CREATE TABLE clue (
     id INTEGER PRIMARY KEY,
     category_id INTEGER NOT NULL,  -- foreign key
     source_game_id INTEGER,  -- foreign key
-    clue TEXT NOT NULL,
-    answer TEXT NOT NULL,
+    clue TEXT,
+    answer TEXT,
     money INTEGER,
     FOREIGN KEY(category_id) REFERENCES category(id),
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)

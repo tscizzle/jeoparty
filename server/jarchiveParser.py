@@ -57,7 +57,7 @@ class JarchiveParser:
                         single_row_data.find('div')['onmouseover'], 'lxml').find('em', {
                         'class': 'correct_response'}).text
                 else:
-                    clue_text = "Oops! The J-archive databatase doesn\n't have this question."
+                    clue_text = None
                     answer_text = None
                 all_clue_text.append(
                     {
