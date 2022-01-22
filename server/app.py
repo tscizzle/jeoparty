@@ -46,7 +46,7 @@ def get_current_room():
 
 @app.route("/create-room", methods=["POST"])
 def create_room():
-    load_db_for_source_game()
+    jarchive_id = load_db_for_source_game()
 
     # Create a new Room in the db, using the new SourceGame that was just created and a
     # new room code.
@@ -158,10 +158,34 @@ def generate_room_code():
 
 def load_db_for_source_game():
     from jarchiveParser import JarchiveParser
-    random_game_info = JarchiveParser.parse()
+    random_game_info = JarchiveParser().parse()
     jarchive_id = random_game_info['episode_details']['jarchive_id']
     db = get_db()
-    db.execute_and_commit(
+    source_game_id = db.execute_and_commit(
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (date, jarchive_id) VALUES (?, ?)",
         (datetime.now(), jarchive_id),
     )
+    inserted_categories = []
+    for clue_details in random_game_info['clues']:
+        category_text = clue_details['category_info']['text']
+        if category_text not in inserted_categories:
+            category_id = db.execute_and_commit(
+                f"INSERT INTO {JeopartyDb.CATEGORY} "
+                f"(source_game_id, col_order_index, text, round_type) VALUES (?, ?, ?, ?)",
+                (source_game_id,
+                 clue_details['category_info']['col_order_index'],
+                 category_text,
+                 clue_details['category_info']['round_type']),
+            )
+            inserted_categories.append(category_text)
+
+        db.execute_and_commit(
+            f"INSERT INTO {JeopartyDb.CLUE} "
+            f"(category_id, source_game_id, clue, answer, money) VALUES (?, ?, ?, ?, ?)",
+            (category_id,
+             source_game_id,
+             clue_details['question_and_answer']['clue'],
+             clue_details['question_and_answer']['answer'],
+             clue_details['money'])
+        )
+    return jarchive_id

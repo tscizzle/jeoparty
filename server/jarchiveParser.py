@@ -137,4 +137,4 @@ class JarchiveParser:
         }
 
 # if __name__ == '__main__':
-#     results = JarchiveParser().parse()
+#     random_game_info = JarchiveParser().parse()

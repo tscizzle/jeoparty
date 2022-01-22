@@ -22,7 +22,7 @@ CREATE TABLE source_game (
 CREATE TABLE category (
     id INTEGER PRIMARY KEY,
     source_game_id INTEGER NOT NULL,  -- foreign key
-    col_order_index INTEGER NOT NULL,
+    col_order_index INTEGER,
     text TEXT NOT NULL,
     round_type TEXT NOT NULL,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id),
@@ -33,8 +33,9 @@ CREATE TABLE clue (
     id INTEGER PRIMARY KEY,
     category_id INTEGER NOT NULL,  -- foreign key
     source_game_id INTEGER,  -- foreign key
-    text TEXT NOT NULL,
-    money INTEGER NOT NULL,
+    clue TEXT NOT NULL,
+    answer TEXT,
+    money INTEGER,
     FOREIGN KEY(category_id) REFERENCES category(id),
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
 );
