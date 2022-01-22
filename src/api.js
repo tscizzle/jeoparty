@@ -5,7 +5,7 @@ import _ from "lodash";
 export const NICE_SERVER_URL = window.location.origin;
 
 const niceFetch = (...args) => {
-  args[0] = NICE_SERVER_URL + args[0];
+  args[0] = new URL(NICE_SERVER_URL + args[0]);
   args[1] = { credentials: "include", ...args[1] };
   return fetch(...args);
 };
@@ -14,8 +14,8 @@ const niceFetchJSON = (...args) => {
   return niceFetch(...args).then((res) => res.json());
 };
 
-const niceGET = (path) => {
-  return niceFetchJSON(path);
+const niceGET = (query) => {
+  return niceFetchJSON(query);
 };
 
 const getJSONHeaders = () => {
@@ -25,9 +25,8 @@ const getJSONHeaders = () => {
   };
 };
 
-// eslint-disable-next-line
-const nicePOST = (path, body) => {
-  return niceFetchJSON(path, {
+const nicePOST = (query, body) => {
+  return niceFetchJSON(query, {
     method: "POST",
     headers: getJSONHeaders(),
     body: JSON.stringify(body),
@@ -52,8 +51,8 @@ const dateify = ({ obj, dateFieldPaths }) => {
 
 /* API Calls */
 
-const getCurrentPlayer = () => {
-  return niceGET(`/get-current-player`);
+const getCurrentUser = () => {
+  return niceGET(`/get-current-user`);
 };
 
 const getCurrentRoom = () => {
@@ -74,12 +73,19 @@ const leaveRoom = () => {
   return nicePOST("/leave-room");
 };
 
+const getJGameData = ({ sourceGameId }) => {
+  const searchParams = new URLSearchParams({ sourceGameId }).toString();
+  const query = `/get-j-game-data?${searchParams}`;
+  return niceGET(query);
+};
+
 const api = {
-  getCurrentPlayer,
+  getCurrentUser,
   getCurrentRoom,
   createRoom,
   joinRoom,
   leaveRoom,
+  getJGameData,
 };
 
 export default api;

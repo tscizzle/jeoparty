@@ -3,100 +3,62 @@ import PropTypes from "prop-types";
 import _ from "lodash";
 
 import api from "api";
-import { setClientIdCookie } from "misc-helpers";
+import { randomID, setBrowserIdCookie } from "misc-helpers";
 
-import { playerShape, roomShape } from "prop-shapes";
-import withCurrentPlayer from "state-management/state-connectors/with-current-player";
+import { userShape, roomShape } from "prop-shapes";
+import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 
-import "./App.scss";
+import LobbyView from "components/LobbyView/LobbyView";
+import HostView from "components/HostView/HostView";
+import PlayerView from "components/PlayerView/PlayerView";
+
+import "components/App/App.scss";
 
 class App extends Component {
   static propTypes = {
-    /* supplied by withCurrentPlayer */
-    currentPlayer: playerShape,
-    fetchCurrentPlayer: PropTypes.func,
+    /* supplied by withCurrentUser */
+    currentUser: userShape,
+    fetchCurrentUser: PropTypes.func.isRequired,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape,
-    fetchCurrentRoom: PropTypes.func,
+    fetchCurrentRoom: PropTypes.func.isRequired,
   };
 
   state = {
     typedRoomCode: "",
-    roomCodeError: null,
+    roomCodeError: {
+      message: null,
+      timeoutId: null,
+    },
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { currentPlayer, currentRoom } = this.props;
-    const { typedRoomCode, roomCodeError } = this.state;
+    const { currentUser, currentRoom } = this.props;
 
-    const joinRoomDiv = (
-      <div>
-        <h1>Join Room</h1>
-        <input
-          placeholder="ROOM CODE"
-          value={typedRoomCode}
-          onChange={this.onChangeTypedRoomCode}
-        />
-        <button onClick={this.joinRoom}>Join</button>
-        {roomCodeError && (
-          <div className="room-code-error">{roomCodeError}</div>
-        )}
-      </div>
-    );
-
-    const createRoomDiv = (
-      <div>
-        <h1>Create Room</h1>
-        <button onClick={this.createRoom}>Create</button>
-      </div>
-    );
-
-    let currentRoomDiv;
-    if (currentRoom) {
-      currentRoomDiv = (
-        <div>
-          <h1>Room code: {currentRoom.room_code}</h1>
-        </div>
-      );
-    }
-
-    let currentPlayerDiv;
-    if (currentPlayer) {
-      currentPlayerDiv = (
-        <div>
-          <h1>
-            Player name: <input value={currentPlayer.name} />
-          </h1>
-        </div>
-      );
-    }
-
-    const leaveRoomDiv = (
-      <div>
-        <button onClick={this.leaveRoom}>Leave Room</button>
-      </div>
-    );
+    const showLoading = !currentUser;
+    const showLobbyView = currentUser && !currentRoom;
+    const showHostView = currentUser && currentRoom && currentUser.is_host;
+    const showPlayerView = currentUser && currentRoom && !currentUser.is_host;
 
     return (
       <div className="app">
-        {_.isNull(currentRoom) && joinRoomDiv}
-        {_.isNull(currentRoom) && createRoomDiv}
-        {!_.isNull(currentRoom) && currentRoomDiv}
-        {!_.isNull(currentRoom) && currentPlayerDiv}
-        {!_.isNull(currentRoom) && leaveRoomDiv}
+        {showLoading && <div>Loading…</div>}
+        {showLobbyView && <LobbyView />}
+        {showHostView && <HostView />}
+        {showPlayerView && <PlayerView />}
       </div>
     );
   }
 
   componentDidMount() {
-    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
+    const { fetchCurrentUser, fetchCurrentRoom } = this.props;
 
-    setClientIdCookie();
+    setBrowserIdCookie();
 
-    fetchCurrentPlayer();
+    fetchCurrentUser();
     fetchCurrentRoom();
   }
 
@@ -105,42 +67,9 @@ class App extends Component {
   onChangeTypedRoomCode = (evt) => {
     this.setState({ typedRoomCode: evt.target.value.toUpperCase() });
   };
-
-  createRoom = () => {
-    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
-
-    api.createRoom().then(() => {
-      fetchCurrentPlayer();
-      fetchCurrentRoom();
-    });
-  };
-
-  joinRoom = () => {
-    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
-    const { typedRoomCode } = this.state;
-
-    api.joinRoom({ roomCode: typedRoomCode }).then((res) => {
-      if (res.success) {
-        fetchCurrentPlayer();
-        fetchCurrentRoom();
-      } else {
-        this.setState({ roomCodeError: res.reason });
-        setTimeout(() => this.setState({ roomCodeError: null }), 3000);
-      }
-    });
-  };
-
-  leaveRoom = () => {
-    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
-
-    api.leaveRoom().then(() => {
-      fetchCurrentPlayer();
-      fetchCurrentRoom();
-    });
-  };
 }
 
-App = withCurrentPlayer(App);
+App = withCurrentUser(App);
 App = withCurrentRoom(App);
 
 export default App;

@@ -1,9 +1,10 @@
-CREATE TABLE player (
+CREATE TABLE user (
     id INTEGER PRIMARY KEY,
-    client_id INTEGER UNIQUE NOT NULL,
+    browser_id INTEGER UNIQUE NOT NULL,
     room_id INTEGER,  -- foreign key
+    is_host BOOLEAN,
     name TEXT,
-    FOREIGN KEY(room_id) REFERENCES room(id)
+    FOREIGN KEY(room_id) REFERENCES room(room_id)
 );
 
 CREATE TABLE room (
@@ -34,7 +35,7 @@ CREATE TABLE clue (
     category_id INTEGER NOT NULL,  -- foreign key
     source_game_id INTEGER,  -- foreign key
     clue TEXT NOT NULL,
-    answer TEXT,
+    answer TEXT NOT NULL,
     money INTEGER,
     FOREIGN KEY(category_id) REFERENCES category(id),
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
@@ -42,13 +43,13 @@ CREATE TABLE clue (
 
 CREATE TABLE submission (
     id INTEGER PRIMARY KEY,
-    player_id INTEGER NOT NULL,  -- foreign key
+    user_id INTEGER NOT NULL,  -- foreign key
     clue_id INTEGER NOT NULL,  -- foreign key
     room_id INTEGER NOT NULL,  -- foreign key
     text TEXT,
     is_correct BOOLEAN DEFAULT 0,
     is_fake_guess BOOLEAN DEFAULT 0,
-    FOREIGN KEY(player_id) REFERENCES player(id),
+    FOREIGN KEY(user_id) REFERENCES user(id),
     FOREIGN KEY(clue_id) REFERENCES clue(id),
     FOREIGN KEY(room_id) REFERENCES room(id)
 );

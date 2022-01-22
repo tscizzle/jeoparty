@@ -9,7 +9,7 @@ class JeopartyDb:
     """Object that represents a connection to our SQLite db."""
 
     # Table names
-    PLAYER = "player"
+    USER = "user"
     ROOM = "room"
     SOURCE_GAME = "source_game"
     CATEGORY = "category"
@@ -94,29 +94,27 @@ class JeopartyDb:
     ## Common Queries
     #####
 
-    def get_player_by_client_id(self, client_id):
-        # For the client_id saved as a cookie in someone's browser, find the existing
-        # Player in the db.
-        player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
-        player_row = self.execute_and_fetch(
-            player_query, (client_id,), do_fetch_one=True
-        )
+    def get_user_by_browser_id(self, browser_id):
+        # For the browser_id saved as a cookie in someone's browser, find the existing
+        # User in the db.
+        user_query = f"SELECT * FROM {JeopartyDb.USER} WHERE browser_id = ?;"
+        user_row = self.execute_and_fetch(user_query, (browser_id,), do_fetch_one=True)
 
-        # If no Player exists yet with that client_id, create a Player with it.
-        if player_row is None:
-            player_insert_query = (
-                f"INSERT INTO {JeopartyDb.PLAYER} (client_id) VALUES (?);"
+        # If no User exists yet with that browser_id, create a User with it.
+        if user_row is None:
+            user_insert_query = (
+                f"INSERT INTO {JeopartyDb.USER} (browser_id) VALUES (?);"
             )
             try:
-                self.execute_and_commit(player_insert_query, (client_id,))
+                self.execute_and_commit(user_insert_query, (browser_id,))
             except sqlite3.IntegrityError:
-                # While trying to create a Player, some other function created one,
+                # While trying to create a User, some other function created one,
                 # which is fine.
                 pass
-            player_row = self.execute_and_fetch(
-                player_query, (client_id,), do_fetch_one=True
+            user_row = self.execute_and_fetch(
+                user_query, (browser_id,), do_fetch_one=True
             )
 
-        # Return the found or created Player.
-        player = dict(player_row)
-        return player
+        # Return the found or created User.
+        user = dict(user_row)
+        return user

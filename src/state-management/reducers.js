@@ -1,15 +1,22 @@
 import {
-  FETCH_CURRENT_PLAYER_SUCCESS,
-  FETCH_CURRENT_PLAYER_FAILURE,
+  FETCH_CURRENT_USER_SUCCESS,
+  FETCH_CURRENT_USER_FAILURE,
   FETCH_CURRENT_ROOM_SUCCESS,
   FETCH_CURRENT_ROOM_FAILURE,
+  FETCH_J_GAME_DATA_SUCCESS,
+  FETCH_J_GAME_DATA_FAILURE,
 } from "state-management/actions";
 
 const getInitialState = () => ({
-  currentPlayer: null,
-  hasAttemptedFetchCurrentPlayer: false,
+  currentUser: null,
+  hasAttemptedFetchCurrentUser: false,
   currentRoom: null,
   hasAttemptedFetchCurrentRoom: false,
+  jGameData: {
+    sourceGame: null,
+    categories: null,
+    clues: null,
+  },
 });
 
 const mainReducer = (state = getInitialState(), action) => {
@@ -24,20 +31,22 @@ const mainReducer = (state = getInitialState(), action) => {
   let newState = state;
 
   switch (action.type) {
-    case FETCH_CURRENT_PLAYER_SUCCESS:
+    case FETCH_CURRENT_USER_SUCCESS:
       newState = {
         ...state,
-        currentPlayer: action.player,
-        hasAttemptedFetchCurrentPlayer: true,
+        currentUser: action.user,
+        hasAttemptedFetchCurrentUser: true,
       };
       break;
-    case FETCH_CURRENT_PLAYER_FAILURE:
+
+    case FETCH_CURRENT_USER_FAILURE:
       newState = {
         ...state,
-        currentPlayer: null,
-        hasAttemptedFetchCurrentPlayer: true,
+        currentUser: null,
+        hasAttemptedFetchCurrentUser: true,
       };
       break;
+
     case FETCH_CURRENT_ROOM_SUCCESS:
       newState = {
         ...state,
@@ -45,6 +54,7 @@ const mainReducer = (state = getInitialState(), action) => {
         hasAttemptedFetchCurrentRoom: true,
       };
       break;
+
     case FETCH_CURRENT_ROOM_FAILURE:
       newState = {
         ...state,
@@ -52,6 +62,26 @@ const mainReducer = (state = getInitialState(), action) => {
         hasAttemptedFetchCurrentRoom: true,
       };
       break;
+
+    case FETCH_J_GAME_DATA_SUCCESS:
+      newState = {
+        ...state,
+        jGameData: {
+          sourceGame: action.sourceGame,
+          categories: action.categories,
+          clues: action.clues,
+        },
+      };
+      break;
+
+    case FETCH_J_GAME_DATA_FAILURE:
+      newState = {
+        ...state,
+        currentRoom: null,
+        hasAttemptedFetchCurrentRoom: true,
+      };
+      break;
+
     default:
       break;
   }

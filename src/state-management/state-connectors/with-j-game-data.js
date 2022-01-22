@@ -1,0 +1,27 @@
+import { connect } from "react-redux";
+
+import { fetchJGameData } from "state-management/actions";
+import { preserveOwnProps } from "state-management/helpers";
+
+const withJGameData = (WrappedComponent) => {
+  const mapStateToProps = (state) => ({
+    jGameData: state.jGameData,
+  });
+
+  const mapDispatchToProps = (dispatch) => ({
+    fetchJGameData: ({ sourceGameId }) =>
+      dispatch(fetchJGameData({ sourceGameId })),
+  });
+
+  const mergeProps = preserveOwnProps;
+
+  const ComponentWithJGameData = connect(
+    mapStateToProps,
+    mapDispatchToProps,
+    mergeProps
+  )(WrappedComponent);
+
+  return ComponentWithJGameData;
+};
+
+export default withJGameData;
