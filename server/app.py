@@ -60,7 +60,7 @@ def get_current_room():
     return {"room": room}
 
 
-@app.route("/create-room")
+@app.route("/create-room", methods=["POST"])
 def create_room():
     ## TODO: get all the possible j-archive games (by their id, I guess)
     all_jarchive_ids = [str(random.random())]
@@ -74,8 +74,12 @@ def create_room():
     # new room code.
     db = get_db()
     room_code = generate_room_code()
-    source_game_query = f"SELECT id FROM {JeopartyDb.SOURCE_GAME} WHERE jarchive_id = ?;"
-    source_game = db.execute_and_fetch(source_game_query, (jarchive_id,), do_fetch_one=True)
+    source_game_query = (
+        f"SELECT id FROM {JeopartyDb.SOURCE_GAME} WHERE jarchive_id = ?;"
+    )
+    source_game = db.execute_and_fetch(
+        source_game_query, (jarchive_id,), do_fetch_one=True
+    )
     room_insert_query = (
         f"INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code) VALUES (?, ?);"
     )
@@ -87,6 +91,14 @@ def create_room():
         f"UPDATE {JeopartyDb.PLAYER} SET room_id = ? WHERE client_id = ?;"
     )
     db.execute_and_commit(player_update_query, (room_id, client_id))
+
+    return {"success": True}
+
+
+@app.route("/join-room", methods=["POST"])
+def join_room():
+    db = get_db()
+    room_code = request.json["roomCode"]
 
     return {"success": True}
 
@@ -145,7 +157,7 @@ def load_db_for_source_game(jarchiveId):
     """
     ## TODO: fetch ish from jarchive
     ## TODO: insert into db (source game, category, clue)
-    db = getDb()
+    db = get_db()
     db.executeAndCommit(
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (date, jarchive_id) VALUES (?, ?)",
         (datetime.now(), jarchiveId),

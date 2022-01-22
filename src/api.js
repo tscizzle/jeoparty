@@ -61,13 +61,20 @@ const getCurrentRoom = () => {
 };
 
 const createRoom = () => {
-  return niceGET("/create-room");
+  return nicePOST("/create-room");
+};
+
+const joinRoom = ({ roomCode }) => {
+  return nicePOST("/join-room", {
+    roomCode,
+  });
 };
 
 const api = {
   getCurrentPlayer,
   getCurrentRoom,
   createRoom,
+  joinRoom,
 };
 
 export default api;
