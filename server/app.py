@@ -179,6 +179,11 @@ def load_db_for_source_game():
             )
             inserted_categories.append(category_text)
 
+        category_query = f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ?"
+        category_row = db.execute_and_fetch(category_query, (category_text,),
+                                            do_fetch_one=True)
+        category_id = dict(category_row)['id']
+
         db.execute_and_commit(
             f"INSERT INTO {JeopartyDb.CLUE} "
             f"(category_id, source_game_id, clue, answer, money) VALUES (?, ?, ?, ?, ?)",
