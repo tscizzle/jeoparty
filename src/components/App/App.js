@@ -7,29 +7,43 @@ import { setClientIdCookie } from "misc-helpers";
 
 import { playerShape, roomShape } from "prop-shapes";
 import withCurrentPlayer from "state-management/state-connectors/with-current-player";
+import withCurrentRoom from "state-management/state-connectors/with-current-room";
 
 import "./App.scss";
-import withCurrentRoom from "state-management/state-connectors/with-current-room";
 
 class App extends Component {
   static propTypes = {
     /* supplied by withCurrentPlayer */
     currentPlayer: playerShape,
     fetchCurrentPlayer: PropTypes.func,
+    /* supplied by withCurrentRoom */
     currentRoom: roomShape,
     fetchCurrentRoom: PropTypes.func,
+  };
+
+  state = {
+    typedRoomCode: "",
+    roomCodeError: null,
   };
 
   /* Lifecycle methods. */
 
   render() {
     const { currentPlayer, currentRoom } = this.props;
+    const { typedRoomCode, roomCodeError } = this.state;
 
     const joinRoomDiv = (
       <div>
         <h1>Join Room</h1>
-        <input placeholder="code"></input>
-        <button>Join</button>
+        <input
+          placeholder="code"
+          value={typedRoomCode}
+          onChange={this.onChangeTypedRoomCode}
+        />
+        <button onClick={this.joinRoom}>Join</button>
+        {roomCodeError && (
+          <div className="room-code-error">{roomCodeError}</div>
+        )}
       </div>
     );
 
@@ -53,17 +67,26 @@ class App extends Component {
     if (currentPlayer) {
       currentPlayerDiv = (
         <div>
-          <h1>Player name: {currentPlayer.name}</h1>
+          <h1>
+            Player name: <input value={currentPlayer.name} />
+          </h1>
         </div>
       );
     }
 
+    const leaveRoomDiv = (
+      <div>
+        <button onClick={this.leaveRoom}>Leave Room</button>
+      </div>
+    );
+
     return (
-      <div className="App">
+      <div className="app">
         {_.isNull(currentRoom) && joinRoomDiv}
         {_.isNull(currentRoom) && createRoomDiv}
         {!_.isNull(currentRoom) && currentRoomDiv}
         {!_.isNull(currentRoom) && currentPlayerDiv}
+        {!_.isNull(currentRoom) && leaveRoomDiv}
       </div>
     );
   }
@@ -79,10 +102,38 @@ class App extends Component {
 
   /* Helpers. */
 
+  onChangeTypedRoomCode = (evt) => {
+    this.setState({ typedRoomCode: evt.target.value });
+  };
+
   createRoom = () => {
     const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
 
     api.createRoom().then(() => {
+      fetchCurrentPlayer();
+      fetchCurrentRoom();
+    });
+  };
+
+  joinRoom = () => {
+    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
+    const { typedRoomCode } = this.state;
+
+    api.joinRoom({ roomCode: typedRoomCode }).then((res) => {
+      if (res.success) {
+        fetchCurrentPlayer();
+        fetchCurrentRoom();
+      } else {
+        this.setState({ roomCodeError: res.reason });
+        setTimeout(() => this.setState({ roomCodeError: null }), 3000);
+      }
+    });
+  };
+
+  leaveRoom = () => {
+    const { fetchCurrentPlayer, fetchCurrentRoom } = this.props;
+
+    api.leaveRoom().then(() => {
       fetchCurrentPlayer();
       fetchCurrentRoom();
     });

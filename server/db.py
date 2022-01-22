@@ -20,6 +20,10 @@ class JeopartyDb:
         self.conn = sqlite3.connect(DB_PATH)
         self.conn.row_factory = sqlite3.Row
 
+    #####
+    ## General DB Methods
+    #####
+
     def execute_and_commit(self, *execute_args, do_execute_script=False):
         """Execute a SQL command and commit to the db.
 
@@ -85,3 +89,34 @@ class JeopartyDb:
         except OSError:
             pass
             print("No database to clear.")
+
+    #####
+    ## Common Queries
+    #####
+
+    def get_player_by_client_id(self, client_id):
+        # For the client_id saved as a cookie in someone's browser, find the existing
+        # Player in the db.
+        player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
+        player_row = self.execute_and_fetch(
+            player_query, (client_id,), do_fetch_one=True
+        )
+
+        # If no Player exists yet with that client_id, create a Player with it.
+        if player_row is None:
+            player_insert_query = (
+                f"INSERT INTO {JeopartyDb.PLAYER} (client_id) VALUES (?);"
+            )
+            try:
+                self.execute_and_commit(player_insert_query, (client_id,))
+            except sqlite3.IntegrityError:
+                # While trying to create a Player, some other function created one,
+                # which is fine.
+                pass
+            player_row = self.execute_and_fetch(
+                player_query, (client_id,), do_fetch_one=True
+            )
+
+        # Return the found or created Player.
+        player = dict(player_row)
+        return player

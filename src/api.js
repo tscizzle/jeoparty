@@ -70,11 +70,16 @@ const joinRoom = ({ roomCode }) => {
   });
 };
 
+const leaveRoom = () => {
+  return nicePOST("/leave-room");
+};
+
 const api = {
   getCurrentPlayer,
   getCurrentRoom,
   createRoom,
   joinRoom,
+  leaveRoom,
 };
 
 export default api;

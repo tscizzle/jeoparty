@@ -21,38 +21,23 @@ def index():
 
 @app.route("/get-current-player")
 def get_current_player():
-    # For the client_id saved as a cookie in someone's browser, find the existing Player
-    # in the db.
     db = get_db()
-    player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
     client_id = get_client_id_from_cookie(request)
-    player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
-
-    # If no Player exists yet with that client_id, create a Player with it.
-    if player_row is None:
-        player_insert_query = f"INSERT INTO {JeopartyDb.PLAYER} (client_id) VALUES (?);"
-        db.execute_and_commit(player_insert_query, (client_id,))
-        player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
-
-    # Send back the Player that was either found or created.
-    player = dict(player_row)
+    player = db.get_player_by_client_id(client_id)
     return {"player": player}
 
 
 @app.route("/get-current-room")
 def get_current_room():
-    # For the client_id saved as a cookie in someone's browser, find the existing Player
-    # in the db.
     db = get_db()
-    player_query = f"SELECT * FROM {JeopartyDb.PLAYER} WHERE client_id = ?;"
     client_id = get_client_id_from_cookie(request)
-    player_row = db.execute_and_fetch(player_query, (client_id,), do_fetch_one=True)
+    player = db.get_player_by_client_id(client_id)
 
     # Get the Room associated with that Player (if there is such a Room).
     room_row = None
-    if player_row is not None and player_row["room_id"] is not None:
+    if player["room_id"] is not None:
         room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
-        room_id = player_row["room_id"]
+        room_id = player["room_id"]
         room_row = db.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
 
     # Send back the Room.
@@ -77,13 +62,15 @@ def create_room():
     source_game_query = (
         f"SELECT id FROM {JeopartyDb.SOURCE_GAME} WHERE jarchive_id = ?;"
     )
-    source_game = db.execute_and_fetch(
+    source_game_row = db.execute_and_fetch(
         source_game_query, (jarchive_id,), do_fetch_one=True
     )
     room_insert_query = (
         f"INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code) VALUES (?, ?);"
     )
-    room_id = db.execute_and_commit(room_insert_query, (source_game["id"], room_code))
+    room_id = db.execute_and_commit(
+        room_insert_query, (source_game_row["id"], room_code)
+    )
 
     # Update the current Player to be in the new Room.
     client_id = get_client_id_from_cookie(request)
@@ -97,8 +84,35 @@ def create_room():
 
 @app.route("/join-room", methods=["POST"])
 def join_room():
+    # Check if there is a matching Room in the db.
     db = get_db()
+    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
     room_code = request.json["roomCode"]
+    room_row = db.execute_and_fetch(room_query, (room_code,), do_fetch_one=True)
+
+    # If the Room exists, have the current player join it.
+    # Otherwise, return an error response.
+    if room_row is not None:
+        player_update_query = f"""
+            UPDATE {JeopartyDb.PLAYER} SET room_id = ? WHERE client_id = ?;
+        """
+        room_id = room_row["id"]
+        client_id = get_client_id_from_cookie(request)
+        db.execute_and_commit(player_update_query, (room_id, client_id))
+        return {"success": True}
+    else:
+        return {"success": False, "reason": f"Room {room_code} does not exist."}
+
+
+@app.route("/leave-room", methods=["POST"])
+def leave_room():
+    player_update_query = f"""
+        UPDATE {JeopartyDb.PLAYER} SET room_id = ? WHERE client_id = ?;
+    """
+    # Set the current Player as having no Room.
+    db = get_db()
+    client_id = get_client_id_from_cookie(request)
+    db.execute_and_commit(player_update_query, (None, client_id))
 
     return {"success": True}
 
@@ -134,7 +148,8 @@ def get_db():
 
 
 def get_client_id_from_cookie(req):
-    # Get the id we store in the browser's cookies to remember the Player across page refreshes.
+    # Get the id we store in the browser's cookies to remember the Player across page
+    # refreshes.
 
     # This magic string should match what is being set in the frontend app's code.
     client_id_cookie_key = "jeopartyClientId"
@@ -158,7 +173,7 @@ def load_db_for_source_game(jarchiveId):
     ## TODO: fetch ish from jarchive
     ## TODO: insert into db (source game, category, clue)
     db = get_db()
-    db.executeAndCommit(
+    db.execute_and_commit(
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (date, jarchive_id) VALUES (?, ?)",
         (datetime.now(), jarchiveId),
     )
