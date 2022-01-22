@@ -5,7 +5,6 @@ from datetime import datetime
 
 from db import JeopartyDb
 
-
 app = Flask(__name__)
 
 
@@ -47,13 +46,7 @@ def get_current_room():
 
 @app.route("/create-room", methods=["POST"])
 def create_room():
-    ## TODO: get all the possible j-archive games (by their id, I guess)
-    all_jarchive_ids = [str(random.random())]
-
-    ## TODO: based on the user's criteria, select one (start with fully random, maybe
-    ##      filter to last 10 years for now)
-    jarchive_id = random.choice(all_jarchive_ids)
-    load_db_for_source_game(jarchive_id)
+    load_db_for_source_game()
 
     # Create a new Room in the db, using the new SourceGame that was just created and a
     # new room code.
@@ -163,17 +156,12 @@ def generate_room_code():
     return "".join(random.choice(string.ascii_lowercase) for _ in range(4))
 
 
-def load_db_for_source_game(jarchiveId):
-    """Fetch game info, category info, and clue info for a given Jeopardy game on
-    j-archive's website, and load our db tables with it all.
-
-    :param str jarchiveId: Identifier of the game in j-archive. Used in the URL in
-        j-archive for fetching all the info.
-    """
-    ## TODO: fetch ish from jarchive
-    ## TODO: insert into db (source game, category, clue)
+def load_db_for_source_game():
+    from jarchiveParser import JarchiveParser
+    random_game_info = JarchiveParser.parse()
+    jarchive_id = random_game_info['episode_details']['jarchive_id']
     db = get_db()
     db.execute_and_commit(
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (date, jarchive_id) VALUES (?, ?)",
-        (datetime.now(), jarchiveId),
+        (datetime.now(), jarchive_id),
     )
