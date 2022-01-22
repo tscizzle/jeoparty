@@ -68,8 +68,6 @@ def create_room():
     ## TODO: based on the user's criteria, select one (start with fully random, maybe
     ##      filter to last 10 years for now)
     jarchive_id = random.choice(all_jarchive_ids)
-
-    # For the chosen game from j-archive, load 'er up into our db.
     load_db_for_source_game(jarchive_id)
 
     # Create a new Room in the db, using the new SourceGame that was just created and a
@@ -112,17 +110,11 @@ def teardown(exception):
 
 
 #####
-## Misc Helperscd
+## Misc Helpers
 #####
 
 
 def get_db():
-    """Get this Flask app's db object which represents a connection to our SQLite db.
-        - If such an object already exists, use the existing one.
-        - If not, create one (which opens a connection).
-
-    :return JeopartyDb:
-    """
     db = getattr(g, "_database", None)
     if db is None:
         db = g._database = JeopartyDb()
@@ -130,13 +122,8 @@ def get_db():
 
 
 def get_client_id_from_cookie(req):
-    """Get the id we store in the browser's cookies to remember the Player across page
-        refreshes.
+    # Get the id we store in the browser's cookies to remember the Player across page refreshes.
 
-    :param flask.Request req:
-
-    :return str:
-    """
     # This magic string should match what is being set in the frontend app's code.
     client_id_cookie_key = "jeopartyClientId"
 
@@ -146,10 +133,6 @@ def get_client_id_from_cookie(req):
 
 
 def generate_room_code():
-    """Generate a random code for joining a Room.
-
-    :return str: Random 4 letters, lowercase. E.g. "mxyg"
-    """
     return "".join(random.choice(string.ascii_lowercase) for _ in range(4))
 
 
