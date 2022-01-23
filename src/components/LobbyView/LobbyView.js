@@ -27,7 +27,7 @@ class LobbyView extends Component {
   /* Lifecycle methods. */
 
   render() {
-    const { typedRoomCode, roomCodeError } = this.state;
+    const { typedRoomCode, roomCodeError, isLoadingRoom } = this.state;
 
     return (
       <div className="app">
@@ -47,6 +47,7 @@ class LobbyView extends Component {
           <h1>Create Room</h1>
           <button onClick={this.createRoom}>Create</button>
         </div>
+        {isLoadingRoom && <div>Loading…</div>}
       </div>
     );
   }
