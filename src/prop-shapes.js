@@ -16,7 +16,7 @@ export const roomShape = PropTypes.shape({
 
 export const sourceGameShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
-  date: PropTypes.instanceOf(Date).isRequired,
+  taped_date: PropTypes.instanceOf(Date).isRequired,
   jarchive_id: PropTypes.string.isRequired,
 });
 
@@ -34,8 +34,8 @@ export const clueShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
   category_id: PropTypes.number.isRequired,
   source_game_id: PropTypes.number.isRequired,
-  clue: PropTypes.string.isRequired,
-  answer: PropTypes.string.isRequired,
+  clue: PropTypes.string,
+  answer: PropTypes.string,
   money: PropTypes.number,
 });
 

@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import _ from "lodash";
 
 import api from "api";
 
@@ -37,7 +36,7 @@ class HostView extends Component {
 
     return (
       <div className="host-view">
-        <h1>ROOM CODE: {currentRoom.roomCode}</h1>
+        <h1>ROOM CODE: {currentRoom.room_code}</h1>
         {showLoading && <div>Loading…</div>}
         {showGame && <JGameDisplay />}
         <button onClick={this.leaveRoom}>Leave Room</button>
@@ -47,8 +46,6 @@ class HostView extends Component {
 
   componentDidMount() {
     const { currentRoom, fetchJGameData } = this.props;
-    console.log(currentRoom);
-    console.log(fetchJGameData);
 
     const { source_game_id } = currentRoom;
     fetchJGameData({ sourceGameId: source_game_id });

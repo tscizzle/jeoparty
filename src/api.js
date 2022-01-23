@@ -1,3 +1,4 @@
+import moment from "moment-timezone";
 import _ from "lodash";
 
 /* Fetching */
@@ -35,14 +36,13 @@ const nicePOST = (query, body) => {
 
 /* Transforming */
 
-// eslint-disable-next-line
 const dateify = ({ obj, dateFieldPaths }) => {
   const newObj = _.cloneDeep(obj);
   _.each(dateFieldPaths, (path) => {
     const hasField = _.has(obj, path);
     if (hasField) {
       const stringVal = _.get(obj, path);
-      const dateVal = new Date(stringVal);
+      const dateVal = moment.tz(stringVal, "UTC").toDate();
       _.set(newObj, path, dateVal);
     }
   });
@@ -76,7 +76,13 @@ const leaveRoom = () => {
 const getJGameData = ({ sourceGameId }) => {
   const searchParams = new URLSearchParams({ sourceGameId }).toString();
   const query = `/get-j-game-data?${searchParams}`;
-  return niceGET(query);
+  return niceGET(query).then((resp) => {
+    const processedResp = dateify({
+      obj: resp,
+      dateFieldPaths: ["sourceGame.taped_date"],
+    });
+    return processedResp;
+  });
 };
 
 const api = {

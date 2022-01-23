@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import moment from "moment-timezone";
 import _ from "lodash";
 
 import {
@@ -62,11 +63,14 @@ class JRound extends Component {
 
     const { categories, clues } = jGameData;
 
+    const roundTitle = this.getRoundTitle();
+
     // Object keyed by category_id, mapped to a list of clues for that category in money
     // order.
     const cluesByCategory = _(clues)
       .groupBy("category_id")
-      .mapValues((categoryClues) => _.orderBy(categoryClues, "money"));
+      .mapValues((categoryClues) => _.orderBy(categoryClues, "money"))
+      .value();
 
     const roundCategories = _.pickBy(categories, { round_type: roundType });
     const roundCategoryCols = _(roundCategories)
@@ -78,16 +82,34 @@ class JRound extends Component {
           clues={cluesByCategory[category.id]}
           key={category.id}
         />
-      ));
+      ))
+      .value();
 
     return (
       <div className="j-round">
-        <div className="j-round-header">{roundType}</div>
+        <div className="j-round-header">{roundTitle}</div>
         <div className="j-round-cols">{roundCategoryCols}</div>
       </div>
     );
   }
+
+  /* Helpers. */
+
+  getRoundTitle = () => {
+    const { roundType } = this.props;
+
+    const roundTitleMap = {
+      single: "Jeopardy! Round",
+      double: "Double Jeopardy! Round",
+      final: "Final Jeopardy! Round",
+    };
+    const roundTitle = roundTitleMap[roundType];
+
+    return roundTitle;
+  };
 }
+
+JRound = withJGameData(JRound);
 
 class JGameDisplay extends Component {
   static propTypes = {
@@ -100,9 +122,13 @@ class JGameDisplay extends Component {
 
     const { sourceGame } = jGameData;
 
+    const tapedDate = moment
+      .tz(sourceGame.taped_date, "UTC")
+      .format("YYYY-MM-DD");
+
     return (
       <div className="j-game-display">
-        <h1>Date: {sourceGame.date}</h1>
+        <h1>Date: {tapedDate}</h1>
         <JRound roundType="single" />
         <JRound roundType="double" />
         <JRound roundType="final" />

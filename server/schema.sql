@@ -16,7 +16,7 @@ CREATE TABLE room (
 
 CREATE TABLE source_game (
     id INTEGER PRIMARY KEY,
-    date TIMESTAMP NOT NULL,
+    taped_date TIMESTAMP NOT NULL,
     jarchive_id TEXT UNIQUE NOT NULL
 );
 

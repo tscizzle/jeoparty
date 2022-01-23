@@ -1,11 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import _ from "lodash";
 
 import api from "api";
-import { randomID } from "misc-helpers";
 
-import { userShape, roomShape } from "prop-shapes";
+import { userShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 

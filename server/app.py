@@ -185,10 +185,11 @@ def load_db_for_source_game():
 
     random_game_info = JarchiveParser().parse()
     jarchive_id = random_game_info["episode_details"]["jarchive_id"]
+    taped_date = random_game_info["episode_details"]["taped"]
     db = get_db()
     source_game_id = db.execute_and_commit(
-        f"INSERT INTO {JeopartyDb.SOURCE_GAME} (date, jarchive_id) VALUES (?, ?)",
-        (datetime.now(), jarchive_id),
+        f"INSERT INTO {JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (?, ?)",
+        (taped_date, jarchive_id),
     )
     inserted_categories = []
     for clue_details in random_game_info["clues"]:
