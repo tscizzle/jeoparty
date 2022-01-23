@@ -4,10 +4,12 @@ import PropTypes from "prop-types";
 import api from "api";
 
 import { roomShape, jGameDataShape } from "prop-shapes";
+import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import JGameDisplay from "components/JGameDisplay/JGameDisplay";
+import jeopardyBackground from "assets/jeopardy_background.jpg";
 
 import "components/HostView/HostView.scss";
 
@@ -35,11 +37,19 @@ class HostView extends Component {
     const showGame = jGameData.sourceGame;
 
     return (
-      <div className="host-view">
-        <h1>ROOM CODE: {currentRoom.room_code}</h1>
+      <div
+        className="host-view"
+        style={{ backgroundImage: `url(${jeopardyBackground})` }}
+      >
         {showLoading && <div>Loading…</div>}
-        {showGame && <JGameDisplay />}
-        <button onClick={this.leaveRoom}>Leave Room</button>
+        {showGame && <JGameDisplay currentRound="single" />}
+        <div className="host-controls">
+          <label>ROOM CODE</label>
+          <b className="room-code">{currentRoom.room_code}</b>
+          <button className="leave-room-button" onClick={this.leaveRoom}>
+            Leave Room
+          </button>
+        </div>
       </div>
     );
   }
@@ -70,6 +80,7 @@ class HostView extends Component {
   };
 }
 
+HostView = withCurrentUser(HostView);
 HostView = withCurrentRoom(HostView);
 HostView = withJGameData(HostView);
 

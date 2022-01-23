@@ -16,14 +16,16 @@ import "components/JGameDisplay/JGameDisplay.scss";
 class Clue extends Component {
   static propTypes = {
     clue: clueShape.isRequired,
+    hasBeenDone: PropTypes.bool.isRequired,
   };
 
   render() {
-    const { clue } = this.props;
+    const { clue, hasBeenDone } = this.props;
 
-    const { clue: clueText } = clue;
+    let { money } = clue;
+    const moneyText = <span className="money-text">${money}</span>;
 
-    return <div className="clue">{clueText}</div>;
+    return <div className="clue">{!hasBeenDone && moneyText}</div>;
   }
 }
 
@@ -31,20 +33,21 @@ class Category extends Component {
   static propTypes = {
     category: categoryShape.isRequired,
     clues: PropTypes.arrayOf(clueShape).isRequired,
+    hasBeenDone: PropTypes.bool.isRequired,
   };
 
   render() {
-    const { category, clues } = this.props;
+    const { category, clues, hasBeenDone } = this.props;
 
     const { text } = category;
 
     const categoryClueCells = _.map(clues, (clue) => (
-      <Clue clue={clue} key={clue.id} />
+      <Clue clue={clue} hasBeenDone={false} key={clue.id} />
     ));
 
     return (
       <div className="category">
-        <div className="category-title">{text}</div>
+        <div className="category-title">{!hasBeenDone && text}</div>
         <div className="category-cells">{categoryClueCells}</div>
       </div>
     );
@@ -63,8 +66,6 @@ class JRound extends Component {
 
     const { categories, clues } = jGameData;
 
-    const roundTitle = this.getRoundTitle();
-
     // Object keyed by category_id, mapped to a list of clues for that category in money
     // order.
     const cluesByCategory = _(clues)
@@ -80,6 +81,7 @@ class JRound extends Component {
         <Category
           category={category}
           clues={cluesByCategory[category.id]}
+          hasBeenDone={false}
           key={category.id}
         />
       ))
@@ -87,38 +89,23 @@ class JRound extends Component {
 
     return (
       <div className="j-round">
-        <div className="j-round-header">{roundTitle}</div>
         <div className="j-round-cols">{roundCategoryCols}</div>
       </div>
     );
   }
-
-  /* Helpers. */
-
-  getRoundTitle = () => {
-    const { roundType } = this.props;
-
-    const roundTitleMap = {
-      single: "Jeopardy! Round",
-      double: "Double Jeopardy! Round",
-      final: "Final Jeopardy! Round",
-    };
-    const roundTitle = roundTitleMap[roundType];
-
-    return roundTitle;
-  };
 }
 
 JRound = withJGameData(JRound);
 
 class JGameDisplay extends Component {
   static propTypes = {
+    currentRound: PropTypes.oneOf(["single", "double", "final"]),
     /* supplied by withJGameData */
     jGameData: jGameDataShape.isRequired,
   };
 
   render() {
-    const { jGameData } = this.props;
+    const { currentRound, jGameData } = this.props;
 
     const { sourceGame } = jGameData;
 
@@ -128,10 +115,8 @@ class JGameDisplay extends Component {
 
     return (
       <div className="j-game-display">
-        <h1>Date: {tapedDate}</h1>
-        <JRound roundType="single" />
-        <JRound roundType="double" />
-        <JRound roundType="final" />
+        <h1 hidden>{tapedDate}</h1>
+        <JRound roundType={currentRound} />
       </div>
     );
   }

@@ -1,14 +1,55 @@
-.j-round {
-  .j-round-header {
-    text-align: center;
-  }
+.j-game-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: Arial, Helvetica, sans-serif;
 
-  .j-round-cols {
-    display: flex;
-    justify-content: space-around;
-  }
+  .j-round {
+    .j-round-header {
+      text-align: center;
+    }
 
-  .category {
-    width: 100%;
+    .j-round-cols {
+      display: flex;
+      padding: 8px 4px;
+      background-color: #111;
+      color: white;
+
+      .category {
+        display: flex;
+        flex-direction: column;
+        width: 220px;
+        margin: 0 4px;
+
+        .category-title,
+        .clue {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 80px;
+          padding: 25px;
+          text-align: center;
+          font-weight: bold;
+          background-color: #0309d0;
+        }
+
+        .category-title {
+          margin-bottom: 8px;
+          font-size: 1.5em;
+          text-shadow: 4px 4px black;
+        }
+
+        .clue {
+          margin-top: 8px;
+          font-size: 4em;
+          text-shadow: 10px 10px black;
+          color: #ddaa55;
+
+          .money-text {
+            transform: scale(1, 1.3);
+          }
+        }
+      }
+    }
   }
 }

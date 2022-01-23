@@ -1,0 +1,31 @@
+.host-view {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100vw;
+  height: 100vh;
+  color: white;
+
+  .host-controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    border-radius: 0 0 0 10px;
+    box-shadow: 10px 10px 10px black;
+    background-color: #eee;
+    color: black;
+
+    .room-code {
+      font-size: 2em;
+    }
+
+    .leave-room-button {
+      margin-top: 10px;
+    }
+  }
+}
