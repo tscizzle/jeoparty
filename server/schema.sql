@@ -41,6 +41,15 @@ CREATE TABLE clue (
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
 );
 
+CREATE TABLE reached_clue (
+    id INTEGER PRIMARY KEY,
+    clue_id INTEGER NOT NULL,  -- foreign key
+    room_id INTEGER NOT NULL,  -- foreign key
+    reached_time TIMESTAMP NOT NULL,
+    FOREIGN KEY(clue_id) REFERENCES clue(id),
+    FOREIGN KEY(room_id) REFERENCES room(id)
+);
+
 CREATE TABLE submission (
     id INTEGER PRIMARY KEY,
     user_id INTEGER NOT NULL,  -- foreign key

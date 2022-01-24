@@ -76,7 +76,7 @@ def create_room():
 
     # Start a background loop for progressing the game.
     executor = get_executor()
-    executor.submit(game_loop)
+    executor.submit(game_loop, room_id)
 
     return {"success": True}
 
