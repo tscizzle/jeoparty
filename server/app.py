@@ -1,9 +1,11 @@
-from flask import Flask, g, request, Response
+from flask import Flask, g, request
+from flask_executor import Executor
+import atexit
 import string
 import random
-from datetime import datetime
 
 from db import JeopartyDb
+from gameLoop import game_loop
 
 app = Flask(__name__)
 
@@ -71,6 +73,10 @@ def create_room():
         UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = true WHERE browser_id = ?;
     """
     db.execute_and_commit(user_update_query, (room_id, browser_id))
+
+    # Start a background loop for progressing the game.
+    executor = get_executor()
+    executor.submit(game_loop)
 
     return {"success": True}
 
@@ -141,15 +147,10 @@ def get_j_game_data():
 
 @app.before_first_request
 def setup():
+    # DB stuff
     JeopartyDb.clear_all()
     db = get_db()
     db.create_tables()
-
-
-@app.teardown_appcontext
-def teardown(exception):
-    db = get_db()
-    db.close()
 
 
 #####
@@ -162,6 +163,13 @@ def get_db():
     if db is None:
         db = g._database = JeopartyDb()
     return db
+
+
+def get_executor():
+    executor = getattr(g, "_executor", None)
+    if executor is None:
+        executor = g._executor = Executor(app)
+    return executor
 
 
 def get_browser_id_from_cookie(req):
