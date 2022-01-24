@@ -18,7 +18,7 @@ def game_loop(room_id):
         source_game_id = dict(source_game_row)['source_game_id']
         next_clue_exists = True
         while next_clue_exists:
-            next_clue_row = get_next_clue_row(db, source_game_id)
+            next_clue_row = get_next_clue_row(db, source_game_id, round_type='single')
             if not next_clue_row:
                 next_clue_exists = False
             run_next_clue(next_clue_row, db, room_id)
@@ -41,17 +41,17 @@ def run_next_clue(next_clue_row, db, room_id):
         'VALUES (?, ?, ?)', (clue_id, room_id, time()))
 
 
-def get_next_clue_row(db, source_game_id):
+def get_next_clue_row(db, source_game_id, round_type):
     next_clue_row = db.execute_and_fetch(
         "SELECT clue.id as clue_id, clue.money, category.text, clue.clue, clue.answer "
         "FROM clue JOIN category ON clue.category_id = category.id "
         "WHERE clue.id NOT IN (select clue_id from reached_clue) "
         "AND clue.source_game_id = ? "
-        "AND category.round_type = 'single' "
+        "AND category.round_type = ? "
         "AND category.col_order_index IS NOT null "
         "ORDER BY category.col_order_index, category.text, clue.money "
         "LIMIT 1",
-        (source_game_id,), do_fetch_one=True)
+        (source_game_id, round_type,), do_fetch_one=True)
     return next_clue_row
 
 
