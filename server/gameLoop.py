@@ -48,7 +48,6 @@ def get_next_clue_row(db, source_game_id, round_type):
         "WHERE clue.id NOT IN (select clue_id from reached_clue) "
         "AND clue.source_game_id = ? "
         "AND category.round_type = ? "
-        "AND category.col_order_index IS NOT null "
         "ORDER BY category.col_order_index, category.text, clue.money "
         "LIMIT 1",
         (source_game_id, round_type,), do_fetch_one=True)
