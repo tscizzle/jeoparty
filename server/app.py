@@ -1,13 +1,27 @@
-from flask import Flask, g, request
-from flask_executor import Executor
-import atexit
-import string
-import random
+from flask import Flask, request, Response
+from flask_cors import CORS
+import time
 
+from miscHelpers import (
+    get_db,
+    get_redis_db,
+    get_executor,
+    get_browser_id_from_cookie,
+    get_room_subscription_key,
+    generate_room_code,
+    format_msg_for_server_side_event,
+    load_db_for_source_game,
+)
 from db import JeopartyDb
 from gameLoop import game_loop
 
+
 app = Flask(__name__)
+
+## TODO: only do this CORS (cross-origin) stuff in dev, not prod (in prod there is no
+##      cross-origin needed, since page will be loaded from same origin as these api
+##      routes, see `index` route below.)
+CORS(app)
 
 
 #####
@@ -75,7 +89,7 @@ def create_room():
     db.execute_and_commit(user_update_query, (room_id, browser_id))
 
     # Start a background loop for progressing the game.
-    executor = get_executor()
+    executor = get_executor(app)
     executor.submit(game_loop, room_id)
 
     return {"success": True}
@@ -140,6 +154,27 @@ def get_j_game_data():
     return {"sourceGame": source_game, "categories": categories, "clues": clues}
 
 
+@app.route("/subscribe-to-room-updates")
+def subscribe_to_room_updates():
+    redis_db = get_redis_db()
+    room_id = request.args.get("roomId")
+    room_pubsub = redis_db.pubsub()
+    sub_key = get_room_subscription_key(room_id)
+    room_pubsub.subscribe(sub_key)
+
+    def msg_stream():
+        while True:
+            msg_dict = room_pubsub.get_message()
+            if msg_dict and msg_dict["type"] == "message":
+                msg_bytes = msg_dict["data"]
+                msg_str = msg_bytes.decode()
+                server_side_event_msg = format_msg_for_server_side_event(msg_str)
+                yield server_side_event_msg
+            time.sleep(0.001)
+
+    return Response(msg_stream(), mimetype="text/event-stream")
+
+
 #####
 ## App Lifecycle
 #####
@@ -151,85 +186,3 @@ def setup():
     JeopartyDb.clear_all()
     db = get_db()
     db.create_tables()
-
-
-#####
-## Misc Helpers
-#####
-
-
-def get_db():
-    db = getattr(g, "_database", None)
-    if db is None:
-        db = g._database = JeopartyDb()
-    return db
-
-
-def get_executor():
-    executor = getattr(g, "_executor", None)
-    if executor is None:
-        executor = g._executor = Executor(app)
-    return executor
-
-
-def get_browser_id_from_cookie(req):
-    # Get the id we store in the browser's cookies to remember the User across page
-    # refreshes.
-
-    # This magic string should match what is being set in the frontend app's code.
-    browser_id_cookie_key = "jPartyBrowserId"
-
-    browser_id = req.cookies.get(browser_id_cookie_key)
-
-    return browser_id
-
-
-def generate_room_code():
-    return "".join(random.choice(string.ascii_uppercase) for _ in range(4))
-
-
-def load_db_for_source_game():
-    from jarchiveParser import JarchiveParser
-
-    random_game_info = JarchiveParser().parse()
-    jarchive_id = random_game_info["episode_details"]["jarchive_id"]
-    taped_date = random_game_info["episode_details"]["taped"]
-    db = get_db()
-    source_game_id = db.execute_and_commit(
-        f"INSERT INTO {JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (?, ?)",
-        (taped_date, jarchive_id),
-    )
-    inserted_categories = []
-    for clue_details in random_game_info["clues"]:
-        category_text = clue_details["category_info"]["text"]
-        if category_text not in inserted_categories:
-            category_id = db.execute_and_commit(
-                f"INSERT INTO {JeopartyDb.CATEGORY} "
-                f"(source_game_id, col_order_index, text, round_type) VALUES (?, ?, ?, ?)",
-                (
-                    source_game_id,
-                    clue_details["category_info"]["col_order_index"],
-                    category_text,
-                    clue_details["category_info"]["round_type"],
-                ),
-            )
-            inserted_categories.append(category_text)
-
-        category_query = f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ?"
-        category_row = db.execute_and_fetch(
-            category_query, (category_text,), do_fetch_one=True
-        )
-        category_id = dict(category_row)["id"]
-
-        db.execute_and_commit(
-            f"INSERT INTO {JeopartyDb.CLUE} "
-            f"(category_id, source_game_id, clue, answer, money) VALUES (?, ?, ?, ?, ?)",
-            (
-                category_id,
-                source_game_id,
-                clue_details["question_and_answer"]["clue"],
-                clue_details["question_and_answer"]["answer"],
-                clue_details["money"],
-            ),
-        )
-    return jarchive_id

@@ -1,44 +1,59 @@
-from time import sleep, time
+import redis
+import time
 import traceback
 
+from miscHelpers import get_room_subscription_key
 from db import JeopartyDb
 
-WHILE_LOOP_SLEEP = .1
-RESPONSE_TIME_LIMIT = .2
+WHILE_LOOP_SLEEP = 0.1
+RESPONSE_TIME_LIMIT = 0.2
 
 
 def game_loop(room_id):
     try:
         db = JeopartyDb()
+
+        redis_db = redis.Redis()
+        room_sub_key = get_room_subscription_key(room_id)
+
+        ## TODO: this will send an update to all clients in the Room! let's settle on
+        ##      what format these updates will take, and Tyler handle them on the
+        ##      frontend and Pre send them on the backend.
+        time.sleep(3)
+        redis_db.publish(room_sub_key, "hello")
+
         wait_for_players_to_join()
         source_game_row = db.execute_and_fetch(
-            f"SELECT source_game_id FROM {JeopartyDb.ROOM} WHERE id = ?", (room_id,),
-            do_fetch_one=True)
-        print(source_game_row['source_game_id'])
-        source_game_id = dict(source_game_row)['source_game_id']
+            f"SELECT source_game_id FROM {JeopartyDb.ROOM} WHERE id = ?",
+            (room_id,),
+            do_fetch_one=True,
+        )
+        print(source_game_row["source_game_id"])
+        source_game_id = dict(source_game_row)["source_game_id"]
         next_clue_exists = True
         while next_clue_exists:
-            next_clue_row = get_next_clue_row(db, source_game_id, round_type='single')
+            next_clue_row = get_next_clue_row(db, source_game_id, round_type="single")
             if not next_clue_row:
                 next_clue_exists = False
             run_next_clue(next_clue_row, db, room_id)
-        print('game over!')
+        print("game over!")
 
     except Exception:
         print(traceback.format_exc())
 
 
 def run_next_clue(next_clue_row, db, room_id):
-    clue_id = next_clue_row['clue_id']
-    money = next_clue_row['money']
-    text = next_clue_row['text']
-    clue = next_clue_row['clue']
-    answer = next_clue_row['answer']
-    print(f'DISPLAY THIS: {money} {text} {clue} {answer}')
+    clue_id = next_clue_row["clue_id"]
+    money = next_clue_row["money"]
+    text = next_clue_row["text"]
+    clue = next_clue_row["clue"]
+    answer = next_clue_row["answer"]
+    print(f"DISPLAY THIS: {money} {text} {clue} {answer}")
     wait_for_players_to_answer()
     db.execute_and_commit(
-        'INSERT INTO reached_clue (clue_id, room_id, reached_time) '
-        'VALUES (?, ?, ?)', (clue_id, room_id, time()))
+        "INSERT INTO reached_clue (clue_id, room_id, reached_time) " "VALUES (?, ?, ?)",
+        (clue_id, room_id, time.time()),
+    )
 
 
 def get_next_clue_row(db, source_game_id, round_type):
@@ -50,22 +65,27 @@ def get_next_clue_row(db, source_game_id, round_type):
         "AND category.round_type = ? "
         "ORDER BY category.col_order_index, category.text, clue.money "
         "LIMIT 1",
-        (source_game_id, round_type,), do_fetch_one=True)
+        (
+            source_game_id,
+            round_type,
+        ),
+        do_fetch_one=True,
+    )
     return next_clue_row
 
 
 def wait_for_players_to_join():
-    everyone_joined = True
+    everyone_joined = False
     while not everyone_joined:
-        sleep(WHILE_LOOP_SLEEP)
+        time.sleep(WHILE_LOOP_SLEEP)
 
 
 def wait_for_players_to_answer():
     all_players_submitted = False
     response_timeout = False
-    start_time = time()
+    start_time = time.time()
     while not all_players_submitted and not response_timeout:
-        if time() - start_time > RESPONSE_TIME_LIMIT:
+        if time.time() - start_time > RESPONSE_TIME_LIMIT:
             response_timeout = True
-            print('Response time is over!')
-        sleep(WHILE_LOOP_SLEEP)
+            print("Response time is over!")
+        time.sleep(WHILE_LOOP_SLEEP)

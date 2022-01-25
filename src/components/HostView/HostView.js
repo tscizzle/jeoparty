@@ -57,8 +57,21 @@ class HostView extends Component {
   componentDidMount() {
     const { currentRoom, fetchJGameData } = this.props;
 
-    const { source_game_id } = currentRoom;
+    const { id: room_id, source_game_id } = currentRoom;
     fetchJGameData({ sourceGameId: source_game_id });
+
+    // TODO: do the URL part in api.js, using the host/origin variable.
+    // TODO: make the onmessage handler understand whatever room update format we settle
+    //      on, and update redux accordingly.
+    // TODO: make a InGameView which has this room subscription stuff, and has the split
+    // between PlayerView and HostView that we currently do in App)
+    const searchParams = new URLSearchParams({ roomId: room_id }).toString();
+    const eventSource = new EventSource(
+      `http://localhost:5000/subscribe-to-room-updates?${searchParams}`
+    );
+    eventSource.onmessage = (evt) => {
+      console.log(`got message: ${evt.data}`);
+    };
   }
 
   /* Helpers. */
