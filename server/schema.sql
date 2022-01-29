@@ -62,9 +62,11 @@ CREATE TABLE submission (
     clue_id INTEGER NOT NULL,  -- foreign key
     room_id INTEGER NOT NULL,  -- foreign key
     text TEXT,
-    is_correct BOOLEAN DEFAULT 0,
+    is_correct BOOLEAN DEFAULT null,
     is_fake_guess BOOLEAN DEFAULT 0,
     FOREIGN KEY(user_id) REFERENCES user(id),
     FOREIGN KEY(clue_id) REFERENCES clue(id),
-    FOREIGN KEY(room_id) REFERENCES room(id)
+    FOREIGN KEY(room_id) REFERENCES room(id),
+    UNIQUE(user_id, clue_id, room_id)
 );
+

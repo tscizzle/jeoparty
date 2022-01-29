@@ -15,7 +15,6 @@ from miscHelpers import (
 from db import JeopartyDb
 from gameLoop import game_loop
 
-
 app = Flask(__name__)
 
 ## TODO: only do this CORS (cross-origin) stuff in dev, not prod (in prod there is no
@@ -116,6 +115,46 @@ def join_room():
         return {"success": True}
     else:
         return {"success": False, "reason": f"Room {room_code} does not exist."}
+
+
+@app.route("/submit-response", methods=["POST"])
+def submit_response():
+    # Add the submission to the db
+    db = get_db()
+    browser_id = get_browser_id_from_cookie(request)
+    user_id = db.get_user_by_browser_id(browser_id)
+    clue_id = request.json["clueID"]
+    room_id = request.json["roomID"]
+    submission_text = request.json["submissionText"]
+    is_fake_guess = request.json["isFakeGuess"]
+
+    submission_insert_query = (
+        f"INSERT INTO {JeopartyDb.SUBMISSION} (user_id, clue_id, room_id, text, "
+        f"is_fake_guess) VALUES (?, ?);"
+    )
+    db.execute_and_commit(
+        submission_insert_query,
+        (user_id, clue_id, room_id, submission_text, is_fake_guess)
+    )
+    return {"success": True}
+
+
+@app.route("/grade-response", methods=["POST"])
+def grade_response():
+    # Set is_correct in the Submission table in the db
+    db = get_db()
+    browser_id = get_browser_id_from_cookie(request)
+    user_id = db.get_user_by_browser_id(browser_id)
+    clue_id = request.json["clueID"]
+    room_id = request.json["roomID"]
+    is_correct = request.json["isCorrect"]
+
+    grade_response_query = f"""
+                UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ? 
+                WHERE user_id = ? AND clue_id = ? AND room_id = ?;
+            """
+    db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))
+    return {"success": True}
 
 
 @app.route("/leave-room", methods=["POST"])
