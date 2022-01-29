@@ -11,9 +11,9 @@ import withJGameData from "state-management/state-connectors/with-j-game-data";
 import JGameDisplay from "components/JGameDisplay/JGameDisplay";
 import jeopardyBackground from "assets/jeopardy_background.jpg";
 
-import "components/HostView/HostView.scss";
+import "components/InGameView/InGameView.scss";
 
-class HostView extends Component {
+class InGameView extends Component {
   static propTypes = {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
@@ -98,8 +98,8 @@ class HostView extends Component {
   };
 }
 
-HostView = withCurrentUser(HostView);
-HostView = withCurrentRoom(HostView);
-HostView = withJGameData(HostView);
+InGameView = withCurrentUser(InGameView);
+InGameView = withCurrentRoom(InGameView);
+InGameView = withJGameData(InGameView);
 
-export default HostView;
+export default InGameView;

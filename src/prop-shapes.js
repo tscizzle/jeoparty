@@ -13,6 +13,8 @@ export const roomShape = PropTypes.shape({
   source_game_id: PropTypes.number.isRequired,
   room_code: PropTypes.string.isRequired,
   has_game_been_started: PropTypes.oneOf([0, 1]).isRequired,
+  current_clue_id: PropTypes.number,
+  current_clue_stage: PropTypes.oneOf(["answering", "grading"]),
 });
 
 export const sourceGameShape = PropTypes.shape({

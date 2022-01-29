@@ -12,7 +12,11 @@ CREATE TABLE room (
     source_game_id INTEGER NOT NULL,  -- foreign key
     room_code TEXT NOT NULL,
     has_game_been_started BOOLEAN DEFAULT 0,
+    current_clue_id INTEGER,  -- foreign key
+    current_clue_stage TEXT,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
+    FOREIGN KEY(current_clue_id) REFERENCES clue(id)
+    CHECK(clue_stage IN ('answering','grading'))
 );
 
 CREATE TABLE source_game (
@@ -28,7 +32,7 @@ CREATE TABLE category (
     text TEXT NOT NULL,
     round_type TEXT NOT NULL,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id),
-    CHECK (round_type IN ('single','double','final'))
+    CHECK(round_type IN ('single','double','final'))
 );
 
 CREATE TABLE clue (

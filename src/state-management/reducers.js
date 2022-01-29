@@ -31,39 +31,43 @@ const mainReducer = (state = getInitialState(), action) => {
   let newState = state;
 
   switch (action.type) {
-    case FETCH_CURRENT_USER_SUCCESS:
+    case FETCH_CURRENT_USER_SUCCESS: {
       newState = {
         ...state,
         currentUser: action.user,
         hasAttemptedFetchCurrentUser: true,
       };
       break;
+    }
 
-    case FETCH_CURRENT_USER_FAILURE:
+    case FETCH_CURRENT_USER_FAILURE: {
       newState = {
         ...state,
         currentUser: null,
         hasAttemptedFetchCurrentUser: true,
       };
       break;
+    }
 
-    case FETCH_CURRENT_ROOM_SUCCESS:
+    case FETCH_CURRENT_ROOM_SUCCESS: {
       newState = {
         ...state,
         currentRoom: action.room,
         hasAttemptedFetchCurrentRoom: true,
       };
       break;
+    }
 
-    case FETCH_CURRENT_ROOM_FAILURE:
+    case FETCH_CURRENT_ROOM_FAILURE: {
       newState = {
         ...state,
         currentRoom: null,
         hasAttemptedFetchCurrentRoom: true,
       };
       break;
+    }
 
-    case FETCH_J_GAME_DATA_SUCCESS:
+    case FETCH_J_GAME_DATA_SUCCESS: {
       newState = {
         ...state,
         jGameData: {
@@ -73,14 +77,16 @@ const mainReducer = (state = getInitialState(), action) => {
         },
       };
       break;
+    }
 
-    case FETCH_J_GAME_DATA_FAILURE:
+    case FETCH_J_GAME_DATA_FAILURE: {
       newState = {
         ...state,
         currentRoom: null,
         hasAttemptedFetchCurrentRoom: true,
       };
       break;
+    }
 
     default:
       break;
