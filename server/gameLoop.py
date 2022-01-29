@@ -18,7 +18,7 @@ def game_loop(room_id):
         redis_db = redis.Redis()
         room_sub_key = get_room_subscription_key(room_id)
 
-        wait_for_game_to_be_started(db)
+        wait_for_game_to_be_started(db, room_id)
 
         game_started_msg = json.dumps({"TYPE": "GAME_STARTED"})
         redis_db.publish(room_sub_key, game_started_msg)
@@ -35,9 +35,9 @@ def game_loop(room_id):
 
         for round_type in ["single", "double", "final"]:
             while next_clue_row := get_next_clue_row(
-                db, room_id, source_game_id, round_type=round_type
+                    db, room_id, source_game_id, round_type=round_type
             ):
-                run_next_clue(next_clue_row, db, room_id)
+                run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key)
 
         game_over_msg = json.dumps({"TYPE": "GAME_OVER"})
         redis_db.publish(room_sub_key, game_over_msg)
@@ -46,14 +46,15 @@ def game_loop(room_id):
         print(traceback.format_exc())
 
 
-def run_next_clue(next_clue_row, db, room_id):
+def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     clue_id = next_clue_row["id"]
     money = next_clue_row["money"]
     clue = next_clue_row["clue"]
     answer = next_clue_row["answer"]
     print(f"DISPLAY THIS: {money} {clue} {answer}")
-
+    redis_db.publish(room_sub_key, {"TYPE": "CLUE_STARTED", "clue_id": clue_id})
     wait_for_players_to_submit(db, room_id, clue_id)
+    redis_db.publish(room_sub_key, {"TYPE": "CLUE_ENDED", "clue_id": clue_id})
 
     insert_reached_clue_query = f"""
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (?, ?);
