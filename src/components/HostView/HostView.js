@@ -4,7 +4,6 @@ import PropTypes from "prop-types";
 import api from "api";
 
 import { roomShape, jGameDataShape } from "prop-shapes";
-import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
@@ -54,31 +53,6 @@ class HostView extends Component {
     );
   }
 
-  componentDidMount() {
-    const { currentRoom, fetchCurrentRoom, fetchJGameData } = this.props;
-
-    const { id: room_id, source_game_id } = currentRoom;
-    fetchJGameData({ sourceGameId: source_game_id });
-
-    // TODO: do the URL part in api.js, using the host/origin variable.
-    // TODO: make a InGameView which has this room subscription stuff, and has the split
-    // between PlayerView and HostView that we currently do in App)
-    const searchParams = new URLSearchParams({ roomId: room_id }).toString();
-    const eventSource = new EventSource(
-      `http://localhost:5000/subscribe-to-room-updates?${searchParams}`
-    );
-    eventSource.onmessage = (evt) => {
-      console.log(`got message: ${evt.data}`);
-      const msg = JSON.parse(evt.data);
-      switch (msg.TYPE) {
-        case "ROOM_UPDATE": {
-          fetchCurrentRoom();
-          break;
-        }
-      }
-    };
-  }
-
   /* Helpers. */
 
   leaveRoom = () => {
@@ -98,7 +72,6 @@ class HostView extends Component {
   };
 }
 
-HostView = withCurrentUser(HostView);
 HostView = withCurrentRoom(HostView);
 HostView = withJGameData(HostView);
 

@@ -16,7 +16,7 @@ CREATE TABLE room (
     current_clue_stage TEXT,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
     FOREIGN KEY(current_clue_id) REFERENCES clue(id)
-    CHECK(clue_stage IN ('answering','grading'))
+    CHECK(current_clue_stage IN ('answering','grading'))
 );
 
 CREATE TABLE source_game (
