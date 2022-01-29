@@ -34,7 +34,7 @@ def game_loop(room_id):
 
         for round_type in ["single", "double", "final"]:
             while next_clue_row := get_next_clue_row(
-                    db, room_id, source_game_id, round_type=round_type
+                db, room_id, source_game_id, round_type=round_type
             ):
                 run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key)
         _send_room_update_to_redis(redis_db, room_sub_key)

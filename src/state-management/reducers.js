@@ -88,8 +88,9 @@ const mainReducer = (state = getInitialState(), action) => {
       break;
     }
 
-    default:
+    default: {
       break;
+    }
   }
 
   if (verbose) {
