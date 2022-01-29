@@ -98,7 +98,7 @@ def get_next_clue_row(db, room_id, source_game_id, round_type):
 
 def wait_for_game_to_be_started(db, room_id):
     has_game_been_started_query = f"""
-        SELECT 1 FROM {JeopartyDb.ROOM} WHERE room_id = ? AND has_game_been_started = 1;
+        SELECT 1 FROM {JeopartyDb.ROOM} WHERE id = ? AND has_game_been_started = 1;
     """
     while True:
         has_game_been_started = db.execute_and_fetch(
