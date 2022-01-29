@@ -52,9 +52,9 @@ def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     clue = next_clue_row["clue"]
     answer = next_clue_row["answer"]
     print(f"DISPLAY THIS: {money} {clue} {answer}")
-    redis_db.publish(room_sub_key, {"TYPE": "CLUE_STARTED", "clue_id": clue_id})
+    redis_db.publish(room_sub_key, {"TYPE": "START_ANSWERING", "clue_id": clue_id})
     wait_for_players_to_submit(db, room_id, clue_id)
-    redis_db.publish(room_sub_key, {"TYPE": "CLUE_ENDED", "clue_id": clue_id})
+    ## DO SIMILAR LOGIC HERE WHERE YOU WAIT FOR GRADING
 
     insert_reached_clue_query = f"""
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (?, ?);
