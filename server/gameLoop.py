@@ -158,4 +158,4 @@ def wait_for_players_to_grade(db, room_id, clue_id, redis_db, room_sub_key):
 
 
 def _send_room_update_to_redis(redis_db, room_sub_key):
-    redis_db.publish(room_sub_key, {"TYPE": "ROOM_UPDATE"})
+    redis_db.publish(room_sub_key, json.dumps({"TYPE": "ROOM_UPDATE"}))
