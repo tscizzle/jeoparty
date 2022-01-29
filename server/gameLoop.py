@@ -127,6 +127,7 @@ def wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key):
         all_players_submitted = get_did_all_players_submit(db, room_id, clue_id)
         response_timeout = time.time() - start_time > RESPONSE_TIME_LIMIT
         time.sleep(WHILE_LOOP_SLEEP)
+    _send_room_update_to_redis(redis_db, room_sub_key)
 
 
 def wait_for_players_to_grade(db, room_id, clue_id, redis_db, room_sub_key):
