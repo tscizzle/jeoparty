@@ -50,8 +50,23 @@ def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     answer = next_clue_row["answer"]
     print(f"DISPLAY THIS: {money} {clue} {answer}")
 
+    room_update_query = f"""
+            UPDATE {JeopartyDb.ROOM} SET current_clue_id = ?, clue_stage = 'answering' WHERE room_id = ?;
+        """
+    db.execute_and_commit(room_update_query, (clue_id, room_id))
+
     wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key)
+
+    room_update_query = f"""
+                UPDATE {JeopartyDb.ROOM} SET clue_stage = 'grading' WHERE room_id = ?;
+            """
+    db.execute_and_commit(room_update_query, (room_id,))
     wait_for_players_to_grade(db, room_id, redis_db, room_sub_key)
+
+    room_update_query = f"""
+                    UPDATE {JeopartyDb.ROOM} SET clue_stage = null WHERE room_id = ?;
+                """
+    db.execute_and_commit(room_update_query, (room_id,))
 
     insert_reached_clue_query = f"""
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (?, ?);
