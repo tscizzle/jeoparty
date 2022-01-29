@@ -12,6 +12,7 @@ export const roomShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
   source_game_id: PropTypes.number.isRequired,
   room_code: PropTypes.string.isRequired,
+  has_game_been_started: PropTypes.oneOf([0, 1]).isRequired,
 });
 
 export const sourceGameShape = PropTypes.shape({
@@ -37,6 +38,7 @@ export const clueShape = PropTypes.shape({
   clue: PropTypes.string,
   answer: PropTypes.string,
   money: PropTypes.number,
+  is_daily_double: PropTypes.oneOf([0, 1]).isRequired,
 });
 
 export const jGameDataShape = PropTypes.shape({

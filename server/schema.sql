@@ -11,12 +11,13 @@ CREATE TABLE room (
     id INTEGER PRIMARY KEY,
     source_game_id INTEGER NOT NULL,  -- foreign key
     room_code TEXT NOT NULL,
+    has_game_been_started BOOLEAN DEFAULT 0,
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
 );
 
 CREATE TABLE source_game (
     id INTEGER PRIMARY KEY,
-    taped_date TIMESTAMP NOT NULL,
+    taped_date TEXT NOT NULL,
     jarchive_id TEXT UNIQUE NOT NULL
 );
 
@@ -37,6 +38,7 @@ CREATE TABLE clue (
     clue TEXT,
     answer TEXT,
     money INTEGER,
+    is_daily_double BOOLEAN DEFAULT 0,
     FOREIGN KEY(category_id) REFERENCES category(id),
     FOREIGN KEY(source_game_id) REFERENCES source_game(id)
 );
@@ -45,7 +47,7 @@ CREATE TABLE reached_clue (
     id INTEGER PRIMARY KEY,
     clue_id INTEGER NOT NULL,  -- foreign key
     room_id INTEGER NOT NULL,  -- foreign key
-    reached_time TIMESTAMP NOT NULL,
+    reached_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(clue_id) REFERENCES clue(id),
     FOREIGN KEY(room_id) REFERENCES room(id)
 );

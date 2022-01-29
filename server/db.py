@@ -14,6 +14,7 @@ class JeopartyDb:
     SOURCE_GAME = "source_game"
     CATEGORY = "category"
     CLUE = "clue"
+    REACHED_CLUE = "reached_clue"
     SUBMISSION = "submission"
 
     def __init__(self):
@@ -57,8 +58,8 @@ class JeopartyDb:
         :param bool do_fetch_one: If True, use the method `fetchOne` instead of `fetchAll`
             when retrieving resuls of the query.
 
-        :return list: (if doFetchOne is False)
-        :return dict|None: (if doFetchOne is True)
+        :return sqlite3.Row[]: (if doFetchOne is False)
+        :return sqlite3.Row|None: (if doFetchOne is True)
         """
         cur = self.conn.cursor()
 

@@ -88,7 +88,7 @@ def create_room():
     """
     db.execute_and_commit(user_update_query, (room_id, browser_id))
 
-    # Start a background loop for progressing the game.
+    # Start an ongoing loop in the background for progressing the game.
     executor = get_executor(app)
     executor.submit(game_loop, room_id)
 
@@ -156,6 +156,10 @@ def get_j_game_data():
 
 @app.route("/subscribe-to-room-updates")
 def subscribe_to_room_updates():
+    # This request sets up a long-running "event-stream" from server to client. While
+    # this function is going forever, messages can be put in redis, and they will be
+    # grabbed by the redis pubsub below and sent to the client via that event-stream.
+
     redis_db = get_redis_db()
     room_id = request.args.get("roomId")
     room_pubsub = redis_db.pubsub()
