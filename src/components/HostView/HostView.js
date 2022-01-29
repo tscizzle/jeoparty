@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import api from "api";
 
 import { roomShape, jGameDataShape } from "prop-shapes";
+import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
@@ -14,6 +15,8 @@ import "components/HostView/HostView.scss";
 
 class HostView extends Component {
   static propTypes = {
+    /* supplied by withCurrentUser*/
+    fetchCurrentUser: PropTypes.func.isRequired,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
@@ -72,6 +75,7 @@ class HostView extends Component {
   };
 }
 
+HostView = withCurrentUser(HostView);
 HostView = withCurrentRoom(HostView);
 HostView = withJGameData(HostView);
 
