@@ -50,6 +50,11 @@ def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     answer = next_clue_row["answer"]
     print(f"DISPLAY THIS: {money} {clue} {answer}")
 
+    room_update_query = f"""
+            UPDATE {JeopartyDb.ROOM} SET current_clue_id = ? WHERE room_id = ?;
+        """
+    db.execute_and_commit(room_update_query, (clue_id, room_id))
+
     wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key)
     wait_for_players_to_grade(db, room_id, redis_db, room_sub_key)
 
