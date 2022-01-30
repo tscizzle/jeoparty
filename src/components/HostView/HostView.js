@@ -74,15 +74,13 @@ class LobbyView extends Component {
 LobbyView = withCurrentRoom(LobbyView);
 LobbyView = withPlayersInRoom(LobbyView);
 
-class HostView extends Component {
+class HostControls extends Component {
   static propTypes = {
     /* supplied by withCurrentUser*/
     fetchCurrentUser: PropTypes.func.isRequired,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
-    /* supplied by withJGameData */
-    jGameData: jGameDataShape,
   };
 
   state = {
@@ -92,27 +90,17 @@ class HostView extends Component {
   /* Lifecycle methods. */
 
   render() {
-    const { currentRoom, jGameData } = this.props;
-    const { isLoadingStartingGame, isLoadingLeavingRoom } = this.state;
-
-    const showLoading =
-      !jGameData || isLoadingStartingGame || isLoadingLeavingRoom;
-    const showGame = currentRoom.has_game_been_started && jGameData;
+    const { currentRoom } = this.props;
+    const { isLoadingLeavingRoom } = this.state;
 
     return (
-      <div
-        className="host-view"
-        style={{ backgroundImage: `url(${jeopardyBackground})` }}
-      >
-        {showLoading && <div>Loading…</div>}
-        {showGame ? <JGameDisplay currentRound="single" /> : <LobbyView />}
-        <div className="host-controls">
-          <label>ROOM CODE</label>
-          <b className="room-code">{currentRoom.room_code}</b>
-          <button className="leave-room-button" onClick={this.leaveRoom}>
-            Leave Room
-          </button>
-        </div>
+      <div className="host-controls">
+        <label>ROOM CODE</label>
+        <b className="room-code">{currentRoom.room_code}</b>
+        <button className="leave-room-button" onClick={this.leaveRoom}>
+          Leave Room
+        </button>
+        {isLoadingLeavingRoom && <div>Loading…</div>}
       </div>
     );
   }
@@ -135,7 +123,36 @@ class HostView extends Component {
   };
 }
 
-HostView = withCurrentUser(HostView);
+HostControls = withCurrentUser(HostControls);
+HostControls = withCurrentRoom(HostControls);
+
+class HostView extends Component {
+  static propTypes = {
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape,
+  };
+
+  render() {
+    const { currentRoom, jGameData } = this.props;
+
+    const showLoading = !jGameData;
+    const showGame = currentRoom.has_game_been_started && jGameData;
+
+    return (
+      <div
+        className="host-view"
+        style={{ backgroundImage: `url(${jeopardyBackground})` }}
+      >
+        {showLoading && <div>Loading…</div>}
+        {showGame ? <JGameDisplay /> : <LobbyView />}
+        <HostControls />
+      </div>
+    );
+  }
+}
+
 HostView = withCurrentRoom(HostView);
 HostView = withJGameData(HostView);
 

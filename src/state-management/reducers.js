@@ -1,5 +1,3 @@
-import _ from "lodash";
-
 import {
   FETCH_CURRENT_USER_SUCCESS,
   FETCH_CURRENT_USER_FAILURE,
@@ -9,7 +7,7 @@ import {
   FETCH_J_GAME_DATA_SUCCESS,
   FETCH_J_GAME_DATA_FAILURE,
 } from "state-management/actions";
-import { getClueOrder } from "misc-helpers";
+import { mapItemsToIdx, getClueOrder } from "misc-helpers";
 
 const getInitialState = () => ({
   currentUser: null,
@@ -81,13 +79,14 @@ const mainReducer = (state = getInitialState(), action) => {
         categories: action.categories,
         clues: action.clues,
       });
+      const clueOrderIdxs = mapItemsToIdx(clueOrder);
       newState = {
         ...state,
         jGameData: {
           sourceGame: action.sourceGame,
           categories: action.categories,
           clues: action.clues,
-          clueOrder,
+          clueOrderIdxs,
         },
       };
       break;

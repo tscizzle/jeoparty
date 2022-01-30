@@ -20,17 +20,25 @@ class Clue extends Component {
     clue: clueShape.isRequired,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { clue, currentRoom } = this.props;
+    const { clue, currentRoom, jGameData } = this.props;
 
     const { id: this_clue_id, clue: clueText, money } = clue;
     const { current_clue_id, current_clue_stage } = currentRoom;
+    const { clueOrderIdxs } = jGameData;
 
-    const showMoney = !this.hasBeenDone();
+    const thisClueIdx = clueOrderIdxs[this_clue_id];
+    const currentClueIdx = !_.isNull(current_clue_id)
+      ? clueOrderIdxs[current_clue_id]
+      : -1;
+
+    const showMoney = thisClueIdx > currentClueIdx;
     const showThisClueText =
       this_clue_id === current_clue_id && current_clue_stage === "answering";
 
@@ -41,67 +49,53 @@ class Clue extends Component {
       </div>
     );
   }
-
-  /* Helpers. */
-
-  hasBeenDone = () => {
-    const { clue, currentRoom } = this.props;
-
-    const { id: this_clue_id } = clue;
-    const { current_clue_id } = currentRoom;
-
-    // TODO: get an ordering of all the clues, and check which of this_clue_id and
-    //    current_clue_id come first
-
-    return false;
-  };
 }
 
 Clue = withCurrentRoom(Clue);
+Clue = withJGameData(Clue);
 
 class Category extends Component {
   static propTypes = {
     category: categoryShape.isRequired,
     clues: PropTypes.arrayOf(clueShape).isRequired,
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { category, clues } = this.props;
+    const { category, clues, currentRoom, jGameData } = this.props;
 
     const { text } = category;
+    const { current_clue_id } = currentRoom;
+    const { clueOrderIdxs } = jGameData;
+    const orderedClues = _.orderBy(clues, "money");
 
-    const categoryClueCells = _.map(clues, (clue) => (
+    const lastClueIdxInThisCategory = clueOrderIdxs[_.last(orderedClues).id];
+    const currentClueIdx = !_.isNull(current_clue_id)
+      ? clueOrderIdxs[current_clue_id]
+      : -1;
+
+    const cells = _.map(orderedClues, (clue) => (
       <Clue clue={clue} key={clue.id} />
     ));
 
-    const showCategoryTitle = !this.hasBeenDone();
+    const showCategoryTitle = lastClueIdxInThisCategory > currentClueIdx;
 
     return (
       <div className="category">
         <div className="category-title">{showCategoryTitle && text}</div>
-        <div className="category-cells">{categoryClueCells}</div>
+        <div className="category-cells">{cells}</div>
       </div>
     );
   }
-
-  /* Helpers. */
-
-  hasBeenDone = () => {
-    const { category, currentRoom } = this.props;
-
-    const { id: category_id } = category;
-    const { current_clue_id } = currentRoom;
-
-    // TODO: get an ordering of all the categories, get the category for the
-    //    current_clue_id check which of category_id and that category come first
-
-    return false;
-  };
 }
 
 Category = withCurrentRoom(Category);
+Category = withJGameData(Category);
 
 class JRound extends Component {
   static propTypes = {
@@ -115,15 +109,13 @@ class JRound extends Component {
 
     const { categories, clues } = jGameData;
 
-    // Object keyed by category_id, mapped to a list of clues for that category in money
-    // order.
-    const cluesByCategory = _(clues)
-      .groupBy("category_id")
-      .mapValues((categoryClues) => _.orderBy(categoryClues, "money"))
-      .value();
+    const cluesByCategory = _.groupBy(clues, "category_id");
 
-    const roundCategories = _.pickBy(categories, { round_type: roundType });
-    const roundCategoryCols = _(roundCategories)
+    const categoriesForThisRound = _.pickBy(categories, {
+      round_type: roundType,
+    });
+
+    const columns = _(categoriesForThisRound)
       .values()
       .orderBy("col_order_index")
       .map((category) => (
@@ -137,7 +129,7 @@ class JRound extends Component {
 
     return (
       <div className="j-round">
-        <div className="j-round-cols">{roundCategoryCols}</div>
+        <div className="j-round-columns">{columns}</div>
       </div>
     );
   }
@@ -147,19 +139,28 @@ JRound = withJGameData(JRound);
 
 class JGameDisplay extends Component {
   static propTypes = {
-    currentRound: PropTypes.oneOf(["single", "double", "final"]),
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
     /* supplied by withJGameData */
     jGameData: jGameDataShape.isRequired,
   };
 
   render() {
-    const { currentRound, jGameData } = this.props;
+    const { currentRoom, jGameData } = this.props;
 
     const { sourceGame } = jGameData;
 
     const tapedDate = moment
       .tz(sourceGame.taped_date, "UTC")
       .format("YYYY-MM-DD");
+
+    const { current_clue_id } = currentRoom;
+    const currentClue = jGameData.clues[current_clue_id];
+    let currentRound = "single";
+    if (currentClue) {
+      const currentCategory = jGameData.categories[currentClue.category_id];
+      currentRound = currentCategory.round_type;
+    }
 
     return (
       <div className="j-game-display">
@@ -170,6 +171,7 @@ class JGameDisplay extends Component {
   }
 }
 
+JGameDisplay = withCurrentRoom(JGameDisplay);
 JGameDisplay = withJGameData(JGameDisplay);
 
 export default JGameDisplay;
