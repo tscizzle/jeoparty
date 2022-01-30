@@ -73,6 +73,12 @@ const leaveRoom = () => {
   return nicePOST("/leave-room");
 };
 
+const registerName = ({ nameToRegister }) => {
+  return nicePOST("/register-name", {
+    nameToRegister,
+  });
+};
+
 const getJGameData = ({ sourceGameId }) => {
   const searchParams = new URLSearchParams({ sourceGameId }).toString();
   const query = `/get-j-game-data?${searchParams}`;
@@ -91,6 +97,7 @@ const api = {
   createRoom,
   joinRoom,
   leaveRoom,
+  registerName,
   getJGameData,
 };
 

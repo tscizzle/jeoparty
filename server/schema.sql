@@ -3,7 +3,7 @@ CREATE TABLE user (
     browser_id INTEGER UNIQUE NOT NULL,
     room_id INTEGER,  -- foreign key
     is_host BOOLEAN,
-    name TEXT,
+    registered_name TEXT,
     FOREIGN KEY(room_id) REFERENCES room(room_id)
 );
 

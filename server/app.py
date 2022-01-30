@@ -143,6 +143,21 @@ def leave_room():
     return {"success": True}
 
 
+@app.route("/register-name", methods=["POST"])
+def register_name():
+    name_to_register = request.json["nameToRegister"]
+    # Set the current User as having no Room.
+    db = get_db()
+    browser_id = get_browser_id_from_cookie(request)
+
+    user_update_query = f"""
+        UPDATE {JeopartyDb.USER} SET registered_name = ? WHERE browser_id = ?;
+    """
+    db.execute_and_commit(user_update_query, (None, name_to_register))
+
+    return {"success": True}
+
+
 @app.route("/start-game", methods=["POST"])
 def start_game():
     # Set the current Room as having started.
