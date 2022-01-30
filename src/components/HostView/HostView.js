@@ -27,6 +27,8 @@ class LobbyView extends Component {
     isLoadingStartingGame: false,
   };
 
+  /* Lifecycle methods. */
+
   render() {
     const { playersInRoom } = this.props;
 
@@ -103,11 +105,7 @@ class HostView extends Component {
         style={{ backgroundImage: `url(${jeopardyBackground})` }}
       >
         {showLoading && <div>Loading…</div>}
-        {showGame ? (
-          <JGameDisplay currentRound="single" />
-        ) : (
-          <LobbyView />
-        )}
+        {showGame ? <JGameDisplay currentRound="single" /> : <LobbyView />}
         <div className="host-controls">
           <label>ROOM CODE</label>
           <b className="room-code">{currentRoom.room_code}</b>

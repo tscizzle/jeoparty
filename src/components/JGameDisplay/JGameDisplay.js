@@ -4,11 +4,13 @@ import moment from "moment-timezone";
 import _ from "lodash";
 
 import {
+  roomShape,
   roundShape,
   categoryShape,
   clueShape,
   jGameDataShape,
 } from "prop-shapes";
+import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/JGameDisplay/JGameDisplay.scss";
@@ -16,43 +18,90 @@ import "components/JGameDisplay/JGameDisplay.scss";
 class Clue extends Component {
   static propTypes = {
     clue: clueShape.isRequired,
-    hasBeenDone: PropTypes.bool.isRequired,
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
   };
 
+  /* Lifecycle methods. */
+
   render() {
-    const { clue, hasBeenDone } = this.props;
+    const { clue, currentRoom } = this.props;
 
-    let { money } = clue;
-    const moneyText = <span className="money-text">${money}</span>;
+    const { id: this_clue_id, clue: clueText, money } = clue;
+    const { current_clue_id, current_clue_stage } = currentRoom;
 
-    return <div className="clue">{!hasBeenDone && moneyText}</div>;
+    const showMoney = !this.hasBeenDone();
+    const showThisClueText =
+      this_clue_id === current_clue_id && current_clue_stage === "answering";
+
+    return (
+      <div className="clue">
+        {showMoney && <div className="money-text">${money}</div>}
+        {showThisClueText && <div className="clue-text">{clueText}</div>}
+      </div>
+    );
   }
+
+  /* Helpers. */
+
+  hasBeenDone = () => {
+    const { clue, currentRoom } = this.props;
+
+    const { id: this_clue_id } = clue;
+    const { current_clue_id } = currentRoom;
+
+    // TODO: get an ordering of all the clues, and check which of this_clue_id and
+    //    current_clue_id come first
+
+    return false;
+  };
 }
+
+Clue = withCurrentRoom(Clue);
 
 class Category extends Component {
   static propTypes = {
     category: categoryShape.isRequired,
     clues: PropTypes.arrayOf(clueShape).isRequired,
-    hasBeenDone: PropTypes.bool.isRequired,
   };
 
+  /* Lifecycle methods. */
+
   render() {
-    const { category, clues, hasBeenDone } = this.props;
+    const { category, clues } = this.props;
 
     const { text } = category;
 
     const categoryClueCells = _.map(clues, (clue) => (
-      <Clue clue={clue} hasBeenDone={false} key={clue.id} />
+      <Clue clue={clue} key={clue.id} />
     ));
+
+    const showCategoryTitle = !this.hasBeenDone();
 
     return (
       <div className="category">
-        <div className="category-title">{!hasBeenDone && text}</div>
+        <div className="category-title">{showCategoryTitle && text}</div>
         <div className="category-cells">{categoryClueCells}</div>
       </div>
     );
   }
+
+  /* Helpers. */
+
+  hasBeenDone = () => {
+    const { category, currentRoom } = this.props;
+
+    const { id: category_id } = category;
+    const { current_clue_id } = currentRoom;
+
+    // TODO: get an ordering of all the categories, get the category for the
+    //    current_clue_id check which of category_id and that category come first
+
+    return false;
+  };
 }
+
+Category = withCurrentRoom(Category);
 
 class JRound extends Component {
   static propTypes = {
@@ -81,7 +130,6 @@ class JRound extends Component {
         <Category
           category={category}
           clues={cluesByCategory[category.id]}
-          hasBeenDone={false}
           key={category.id}
         />
       ))
