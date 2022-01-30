@@ -79,7 +79,9 @@ def get_current_room():
 def get_players_in_room(room_id):
     db = get_db()
 
-    players_query = f"""SELECT * FROM {JeopartyDb.USER} WHERE room_id = ?;"""
+    players_query = f"""
+        SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
+    """
     player_rows = db.execute_and_fetch(players_query, (room_id,))
 
     players = {player_row["id"]: dict(player_row) for player_row in player_rows}
@@ -171,7 +173,7 @@ def start_game(room_id):
     db = get_db()
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE room_id = ?;
+        UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 

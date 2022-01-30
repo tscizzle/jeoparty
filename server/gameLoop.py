@@ -7,8 +7,8 @@ from miscHelpers import get_room_subscription_key
 from db import JeopartyDb
 
 WHILE_LOOP_SLEEP = 1
-RESPONSE_TIME_LIMIT = 0.2
-GRADING_TIME_LIMIT = 0.2
+RESPONSE_TIME_LIMIT = 60
+GRADING_TIME_LIMIT = 20
 
 
 #####
@@ -38,10 +38,10 @@ def game_loop(room_id):
         source_game_id = dict(source_game_row)["source_game_id"]
 
         for round_type in ["single", "double", "final"]:
-            while next_clue_row := get_next_clue_row(
+            while next_clue_id := get_next_clue_id(
                 db, room_id, source_game_id, round_type=round_type
             ):
-                run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key)
+                run_next_clue(next_clue_id, db, room_id, redis_db, room_sub_key)
         _send_room_update_to_redis(redis_db, room_sub_key)
 
     except Exception:
@@ -53,29 +53,24 @@ def game_loop(room_id):
 #####
 
 
-def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
-    clue_id = next_clue_row["id"]
-    money = next_clue_row["money"]
-    clue = next_clue_row["clue"]
-    answer = next_clue_row["answer"]
-    print(f"DISPLAY THIS: {money} {clue} {answer}")
-
+def run_next_clue(clue_id, db, room_id, redis_db, room_sub_key):
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET current_clue_id = ?, clue_stage = 'answering'
-        WHERE room_id = ?;
+        UPDATE {JeopartyDb.ROOM}
+        SET current_clue_id = ?, current_clue_stage = 'answering'
+        WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (clue_id, room_id))
 
     wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key)
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET clue_stage = 'grading' WHERE room_id = ?;
+        UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'grading' WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (room_id,))
-    wait_for_players_to_grade(db, room_id, redis_db, room_sub_key)
+    wait_for_players_to_grade(db, room_id, clue_id, redis_db, room_sub_key)
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET clue_stage = NULL WHERE room_id = ?;
+        UPDATE {JeopartyDb.ROOM} SET current_clue_stage = NULL WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 
@@ -85,9 +80,9 @@ def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     db.execute_and_commit(insert_reached_clue_query, (clue_id, room_id))
 
 
-def get_next_clue_row(db, room_id, source_game_id, round_type):
+def get_next_clue_id(db, room_id, source_game_id, round_type):
     next_clue_query = f"""
-        SELECT clue.id, clue.money, clue.clue, clue.answer
+        SELECT clue.id
         FROM {JeopartyDb.CLUE} as clue JOIN {JeopartyDb.CATEGORY} as category
         ON clue.category_id = category.id
         WHERE 
@@ -104,7 +99,8 @@ def get_next_clue_row(db, room_id, source_game_id, round_type):
         (room_id, source_game_id, round_type),
         do_fetch_one=True,
     )
-    return next_clue_row
+    next_clue_id = next_clue_row["id"] if next_clue_row is not None else None
+    return next_clue_id
 
 
 def wait_for_game_to_be_started(db, room_id):

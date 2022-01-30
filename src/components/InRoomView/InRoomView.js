@@ -48,11 +48,13 @@ class InRoomView extends Component {
     } = this.props;
 
     const { id: room_id, source_game_id } = currentRoom;
+
+    fetchPlayersInRoom({ roomId: room_id });
+
     fetchJGameData({ sourceGameId: source_game_id });
 
     const eventSource = api.subscribeToRoomUpdates({ roomId: room_id });
     eventSource.onmessage = (evt) => {
-      console.log(`got message: ${evt.data}`);
       const msg = JSON.parse(evt.data);
       switch (msg.TYPE) {
         case "ROOM_UPDATE": {

@@ -30,11 +30,13 @@ class LobbyView extends Component {
   render() {
     const { playersInRoom } = this.props;
 
-    const playerList = _.map(
-      _.values(playersInRoom, (player) => (
+    const playerList = _(playersInRoom)
+      .values()
+      .map((player) => (
         <div key={player.id}>{player.registered_name || player.id}</div>
       ))
-    );
+      .value();
+
     const canStartGame = playerList.length > 0;
 
     return (
@@ -93,6 +95,7 @@ class HostView extends Component {
 
     const showLoading =
       !jGameData || isLoadingStartingGame || isLoadingLeavingRoom;
+    const showGame = currentRoom.has_game_been_started && jGameData;
 
     return (
       <div
@@ -100,7 +103,7 @@ class HostView extends Component {
         style={{ backgroundImage: `url(${jeopardyBackground})` }}
       >
         {showLoading && <div>Loading…</div>}
-        {currentRoom.has_game_been_started ? (
+        {showGame ? (
           <JGameDisplay currentRound="single" />
         ) : (
           <LobbyView />
