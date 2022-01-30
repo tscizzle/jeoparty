@@ -57,6 +57,12 @@ const getCurrentUser = () => {
   return niceGET("/get-current-user");
 };
 
+const registerName = ({ nameToRegister }) => {
+  return nicePOST("/register-name", {
+    nameToRegister,
+  });
+};
+
 const getCurrentRoom = () => {
   return niceGET("/get-current-room");
 };
@@ -103,6 +109,7 @@ const getJGameData = ({ sourceGameId }) => {
 
 const api = {
   getCurrentUser,
+  registerName,
   getCurrentRoom,
   getPlayersInRoom,
   createRoom,
