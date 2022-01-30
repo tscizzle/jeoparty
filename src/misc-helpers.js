@@ -26,4 +26,9 @@ export const setBrowserIdCookie = () => {
   }
 };
 
+export const getClueOrder = ({ categories, clues }) => {
+  // TODO: sort all the clues based on round, then category, then money
+  return [];
+};
+
 export const isDev = () => process.env.NODE_ENV === "development";
