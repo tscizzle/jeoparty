@@ -1,17 +1,74 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import _ from "lodash";
 
 import api from "api";
 
-import { roomShape, jGameDataShape } from "prop-shapes";
+import { userShape, roomShape, jGameDataShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
+import withPlayersInRoom from "state-management/state-connectors/with-players-in-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import JGameDisplay from "components/JGameDisplay/JGameDisplay";
 import jeopardyBackground from "assets/jeopardy_background.jpg";
 
 import "components/HostView/HostView.scss";
+
+class LobbyView extends Component {
+  static propTypes = {
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
+    /* supplied by withPlayersInRoom */
+    playersInRoom: PropTypes.objectOf(userShape),
+  };
+
+  state = {
+    isLoadingStartingGame: false,
+  };
+
+  render() {
+    const { playersInRoom } = this.props;
+
+    const playerList = _.map(
+      _.values(playersInRoom, (player) => (
+        <div key={player.id}>{player.registered_name || player.id}</div>
+      ))
+    );
+    const canStartGame = playerList.length > 0;
+
+    return (
+      <div className="lobby-view">
+        <div className="player-list">{playerList}</div>
+        <button onClick={this.startGame} disabled={!canStartGame}>
+          Start Game
+        </button>
+      </div>
+    );
+  }
+
+  /* Helpers. */
+
+  startGame = () => {
+    const { currentRoom, fetchCurrentRoom } = this.props;
+
+    const { id: room_id } = currentRoom;
+
+    this.setState({ isLoadingStartingGame: true }, () => {
+      api
+        .startGame({ roomId: room_id })
+        .then(() => {
+          return fetchCurrentRoom();
+        })
+        .then(() => {
+          this.setState({ isLoadingStartingGame: false });
+        });
+    });
+  };
+}
+
+LobbyView = withCurrentRoom(LobbyView);
+LobbyView = withPlayersInRoom(LobbyView);
 
 class HostView extends Component {
   static propTypes = {
@@ -22,21 +79,20 @@ class HostView extends Component {
     fetchCurrentRoom: PropTypes.func.isRequired,
     /* supplied by withJGameData */
     jGameData: jGameDataShape,
-    fetchJGameData: PropTypes.func.isRequired,
   };
 
   state = {
-    isLoadingLeaving: false,
+    isLoadingLeavingRoom: false,
   };
 
   /* Lifecycle methods. */
 
   render() {
     const { currentRoom, jGameData } = this.props;
-    const { isLoadingLeaving } = this.state;
+    const { isLoadingStartingGame, isLoadingLeavingRoom } = this.state;
 
-    const showLoading = !jGameData.sourceGame || isLoadingLeaving;
-    const showGame = jGameData.sourceGame;
+    const showLoading =
+      !jGameData || isLoadingStartingGame || isLoadingLeavingRoom;
 
     return (
       <div
@@ -44,7 +100,11 @@ class HostView extends Component {
         style={{ backgroundImage: `url(${jeopardyBackground})` }}
       >
         {showLoading && <div>Loading…</div>}
-        {showGame && <JGameDisplay currentRound="single" />}
+        {currentRoom.has_game_been_started ? (
+          <JGameDisplay currentRound="single" />
+        ) : (
+          <LobbyView />
+        )}
         <div className="host-controls">
           <label>ROOM CODE</label>
           <b className="room-code">{currentRoom.room_code}</b>
@@ -61,15 +121,14 @@ class HostView extends Component {
   leaveRoom = () => {
     const { fetchCurrentUser, fetchCurrentRoom } = this.props;
 
-    this.setState({ isLoadingLeaving: true }, () => {
+    this.setState({ isLoadingLeavingRoom: true }, () => {
       api
         .leaveRoom()
         .then(() => {
-          fetchCurrentUser();
-          fetchCurrentRoom();
+          return Promise.all([fetchCurrentUser(), fetchCurrentRoom()]);
         })
         .then(() => {
-          this.setState({ isLoadingLeaving: false });
+          this.setState({ isLoadingLeavingRoom: false });
         });
     });
   };

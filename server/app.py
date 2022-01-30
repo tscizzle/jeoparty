@@ -1,6 +1,7 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
 import time
+import json
 
 from miscHelpers import (
     get_db,
@@ -59,15 +60,14 @@ def get_current_room():
     return {"room": room}
 
 
-@app.route("/get-players-in-room")
-def get_players_in_room():
+@app.route("/get-players-in-room/<room_id>")
+def get_players_in_room(room_id):
     db = get_db()
-    room_id = request.json["room_id"]
 
     players_query = f"""SELECT * FROM {JeopartyDb.USER} WHERE room_id = ?;"""
     player_rows = db.execute_and_fetch(players_query, (room_id,))
 
-    players = [dict(player_row) for player_row in player_rows]
+    players = {player_row["id"]: dict(player_row) for player_row in player_rows}
     return {"players": players}
 
 
@@ -124,6 +124,13 @@ def join_room():
         room_id = room_row["id"]
         browser_id = get_browser_id_from_cookie(request)
         db.execute_and_commit(user_update_query, (room_id, browser_id))
+
+        # Tell other clients in the Room that a new Player joined.
+        redis_db = get_redis_db()
+        room_sub_key = get_room_subscription_key(room_id)
+        player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
+        redis_db.publish(room_sub_key, player_joined_msg)
+
         return {"success": True}
     else:
         return {"success": False, "reason": f"Room {room_code} does not exist."}
@@ -143,11 +150,10 @@ def leave_room():
     return {"success": True}
 
 
-@app.route("/start-game", methods=["POST"])
-def start_game():
+@app.route("/start-game/<room_id>", methods=["POST"])
+def start_game(room_id):
     # Set the current Room as having started.
     db = get_db()
-    room_id = request.json["roomId"]
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE room_id = ?;
@@ -199,11 +205,10 @@ def grade_response():
     return {"success": True}
 
 
-@app.route("/get-j-game-data")
-def get_j_game_data():
+@app.route("/get-j-game-data/<source_game_id>")
+def get_j_game_data(source_game_id):
     # For a given SourceGame, get all the data (SourceGame, Categories, Clues).
     db = get_db()
-    source_game_id = request.args.get("sourceGameId")
     source_game_query = f"SELECT * FROM {JeopartyDb.SOURCE_GAME} WHERE id = ?;"
     category_query = f"SELECT * FROM {JeopartyDb.CATEGORY} WHERE source_game_id = ?;"
     clue_query = f"SELECT * FROM {JeopartyDb.CLUE} WHERE source_game_id = ?;"
@@ -222,14 +227,13 @@ def get_j_game_data():
     return {"sourceGame": source_game, "categories": categories, "clues": clues}
 
 
-@app.route("/subscribe-to-room-updates")
-def subscribe_to_room_updates():
+@app.route("/subscribe-to-room-updates/<room_id>")
+def subscribe_to_room_updates(room_id):
     # This request sets up a long-running "event-stream" from server to client. While
     # this function is going forever, messages can be put in redis, and they will be
     # grabbed by the redis pubsub below and sent to the client via that event-stream.
 
     redis_db = get_redis_db()
-    room_id = request.args.get("roomId")
     room_pubsub = redis_db.pubsub()
     sub_key = get_room_subscription_key(room_id)
     room_pubsub.subscribe(sub_key)

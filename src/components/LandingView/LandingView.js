@@ -7,9 +7,9 @@ import { userShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 
-import "components/LobbyView/LobbyView.scss";
+import "components/LandingView/LandingView.scss";
 
-class LobbyView extends Component {
+class LandingView extends Component {
   static propTypes = {
     /* supplied by withCurrentUser */
     currentUser: userShape,
@@ -30,7 +30,7 @@ class LobbyView extends Component {
     const { typedRoomCode, roomCodeError, isLoadingRoom } = this.state;
 
     return (
-      <div className="app">
+      <div className="landing-view">
         <div>
           <h1>Join Room</h1>
           <input
@@ -65,8 +65,7 @@ class LobbyView extends Component {
       api
         .createRoom()
         .then(() => {
-          fetchCurrentUser();
-          fetchCurrentRoom();
+          return Promise.all([fetchCurrentUser(), fetchCurrentRoom()]);
         })
         .then(() => {
           this.setState({ isLoadingRoom: false });
@@ -83,8 +82,7 @@ class LobbyView extends Component {
         .joinRoom({ roomCode: typedRoomCode })
         .then((res) => {
           if (res.success) {
-            fetchCurrentUser();
-            fetchCurrentRoom();
+            return Promise.all([fetchCurrentUser(), fetchCurrentRoom()]);
           } else {
             this.setState({ roomCodeError: res.reason });
           }
@@ -96,7 +94,7 @@ class LobbyView extends Component {
   };
 }
 
-LobbyView = withCurrentUser(LobbyView);
-LobbyView = withCurrentRoom(LobbyView);
+LandingView = withCurrentUser(LandingView);
+LandingView = withCurrentRoom(LandingView);
 
-export default LobbyView;
+export default LandingView;

@@ -8,6 +8,9 @@ export const FETCH_CURRENT_USER_FAILURE = "FETCH_CURRENT_USER_FAILURE";
 export const FETCH_CURRENT_ROOM_SUCCESS = "FETCH_CURRENT_ROOM_SUCCESS";
 export const FETCH_CURRENT_ROOM_FAILURE = "FETCH_CURRENT_ROOM_FAILURE";
 
+export const FETCH_PLAYERS_IN_ROOM_SUCCESS = "FETCH_PLAYERS_IN_ROOM_SUCCESS";
+export const FETCH_PLAYERS_IN_ROOM_FAILURE = "FETCH_PLAYERS_IN_ROOM_FAILURE";
+
 export const FETCH_J_GAME_DATA_SUCCESS = "FETCH_J_GAME_DATA_SUCCESS";
 export const FETCH_J_GAME_DATA_FAILURE = "FETCH_J_GAME_DATA_FAILURE";
 
@@ -62,6 +65,21 @@ export const fetchCurrentRoom = () => {
       .catch(() => {
         dispatch(fetchCurrentRoomFailure());
       });
+  };
+};
+
+const fetchPlayersInRoomSuccess = ({ players }) => ({
+  type: FETCH_PLAYERS_IN_ROOM_SUCCESS,
+  players,
+});
+
+export const fetchPlayersInRoom = ({ roomId }) => {
+  return (dispatch) => {
+    api.getPlayersInRoom({ roomId }).then(({ players }) => {
+      if (players) {
+        dispatch(fetchPlayersInRoomSuccess({ players }));
+      }
+    });
   };
 };
 

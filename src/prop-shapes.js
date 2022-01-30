@@ -44,7 +44,7 @@ export const clueShape = PropTypes.shape({
 });
 
 export const jGameDataShape = PropTypes.shape({
-  sourceGame: sourceGameShape,
-  categories: PropTypes.objectOf(categoryShape),
-  clues: PropTypes.objectOf(clueShape),
+  sourceGame: sourceGameShape.isRequired,
+  categories: PropTypes.objectOf(categoryShape).isRequired,
+  clues: PropTypes.objectOf(clueShape).isRequired,
 });

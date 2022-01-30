@@ -1,9 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 
+import api from "api";
+
 import { userShape, roomShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
+import withPlayersInRoom from "state-management/state-connectors/with-players-in-room";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import HostView from "components/HostView/HostView";
@@ -18,6 +21,8 @@ class InRoomView extends Component {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
+    /* supplied by withPlayersInRoom */
+    fetchPlayersInRoom: PropTypes.func.isRequired,
     /* supplied by withJGameData */
     fetchJGameData: PropTypes.func.isRequired,
   };
@@ -35,22 +40,28 @@ class InRoomView extends Component {
   }
 
   componentDidMount() {
-    const { currentRoom, fetchCurrentRoom, fetchJGameData } = this.props;
+    const {
+      currentRoom,
+      fetchCurrentRoom,
+      fetchPlayersInRoom,
+      fetchJGameData,
+    } = this.props;
 
     const { id: room_id, source_game_id } = currentRoom;
     fetchJGameData({ sourceGameId: source_game_id });
 
-    // TODO: do the URL part in api.js, using the host/origin variable.
-    const searchParams = new URLSearchParams({ roomId: room_id }).toString();
-    const eventSource = new EventSource(
-      `http://localhost:5000/subscribe-to-room-updates?${searchParams}`
-    );
+    const eventSource = api.subscribeToRoomUpdates({ roomId: room_id });
     eventSource.onmessage = (evt) => {
       console.log(`got message: ${evt.data}`);
       const msg = JSON.parse(evt.data);
       switch (msg.TYPE) {
         case "ROOM_UPDATE": {
           fetchCurrentRoom();
+          break;
+        }
+
+        case "PLAYER_JOINED_ROOM": {
+          fetchPlayersInRoom({ roomId: room_id });
           break;
         }
 
@@ -64,6 +75,7 @@ class InRoomView extends Component {
 
 InRoomView = withCurrentUser(InRoomView);
 InRoomView = withCurrentRoom(InRoomView);
+InRoomView = withPlayersInRoom(InRoomView);
 InRoomView = withJGameData(InRoomView);
 
 export default InRoomView;

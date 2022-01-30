@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 
 import api from "api";
 
-import { userShape, roomShape } from "prop-shapes";
+import { userShape, roomShape, jGameDataShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
+import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/HostView/HostView.scss";
 
@@ -17,6 +18,8 @@ class PlayerView extends Component {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape,
   };
 
   /* Lifecycle methods. */
@@ -46,5 +49,6 @@ class PlayerView extends Component {
 
 PlayerView = withCurrentUser(PlayerView);
 PlayerView = withCurrentRoom(PlayerView);
+PlayerView = withJGameData(PlayerView);
 
 export default PlayerView;

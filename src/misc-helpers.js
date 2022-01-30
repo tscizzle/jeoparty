@@ -25,3 +25,5 @@ export const setBrowserIdCookie = () => {
     Cookies.set(browserIdCookieKey, browserIdCookie);
   }
 };
+
+export const isDev = () => process.env.NODE_ENV === "development";

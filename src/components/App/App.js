@@ -7,7 +7,7 @@ import { userShape, roomShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 
-import LobbyView from "components/LobbyView/LobbyView";
+import LandingView from "components/LandingView/LandingView";
 import InRoomView from "components/InRoomView/InRoomView";
 
 import "components/App/App.scss";
@@ -36,13 +36,13 @@ class App extends Component {
     const { currentUser, currentRoom } = this.props;
 
     const showLoading = !currentUser;
-    const showLobbyView = currentUser && !currentRoom;
+    const showLandingView = currentUser && !currentRoom;
     const showInRoomView = currentUser && currentRoom;
 
     return (
       <div className="app">
         {showLoading && <div>Loading…</div>}
-        {showLobbyView && <LobbyView />}
+        {showLandingView && <LandingView />}
         {showInRoomView && <InRoomView />}
       </div>
     );

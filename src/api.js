@@ -1,6 +1,8 @@
 import moment from "moment-timezone";
 import _ from "lodash";
 
+import { isDev } from "misc-helpers";
+
 /* Fetching */
 
 export const NICE_SERVER_URL = window.location.origin;
@@ -52,11 +54,15 @@ const dateify = ({ obj, dateFieldPaths }) => {
 /* API Calls */
 
 const getCurrentUser = () => {
-  return niceGET(`/get-current-user`);
+  return niceGET("/get-current-user");
 };
 
 const getCurrentRoom = () => {
-  return niceGET(`/get-current-room`);
+  return niceGET("/get-current-room");
+};
+
+const getPlayersInRoom = ({ roomId }) => {
+  return niceGET(`/get-players-in-room/${roomId}`);
 };
 
 const createRoom = () => {
@@ -73,10 +79,20 @@ const leaveRoom = () => {
   return nicePOST("/leave-room");
 };
 
+const startGame = ({ roomId }) => {
+  return nicePOST(`/start-game/${roomId}`, {
+    roomId,
+  });
+};
+
+const subscribeToRoomUpdates = ({ roomId }) => {
+  const baseUrl = isDev() ? "http://localhost:5000" : NICE_SERVER_URL;
+  const url = new URL(`${baseUrl}/subscribe-to-room-updates/${roomId}`);
+  return new EventSource(url);
+};
+
 const getJGameData = ({ sourceGameId }) => {
-  const searchParams = new URLSearchParams({ sourceGameId }).toString();
-  const query = `/get-j-game-data?${searchParams}`;
-  return niceGET(query).then((resp) => {
+  return niceGET(`/get-j-game-data/${sourceGameId}`).then((resp) => {
     const processedResp = dateify({
       obj: resp,
       dateFieldPaths: ["sourceGame.taped_date"],
@@ -88,9 +104,12 @@ const getJGameData = ({ sourceGameId }) => {
 const api = {
   getCurrentUser,
   getCurrentRoom,
+  getPlayersInRoom,
   createRoom,
   joinRoom,
   leaveRoom,
+  startGame,
+  subscribeToRoomUpdates,
   getJGameData,
 };
 
