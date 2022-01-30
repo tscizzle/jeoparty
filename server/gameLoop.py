@@ -9,6 +9,7 @@ from db import JeopartyDb
 
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
+CLUE_PREPARE_TIME = 3
 RESPONSE_TIME_LIMIT = 60
 GRADING_TIME_LIMIT = 20
 
@@ -29,7 +30,7 @@ def game_loop(room_id):
 
         redis_db = redis.Redis()
 
-        wait_for_game_to_be_started(db, room_id, redis_db)
+        wait_for_game_to_be_started(db, room_id)
 
         source_game_id = get_source_game_id_for_room(db, room_id)
 
@@ -69,24 +70,37 @@ def get_source_game_id_for_room(db, room_id):
 def run_next_clue(clue_id, db, room_id, redis_db):
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM}
+        SET current_clue_id = ?, current_clue_stage = 'preparing'
+        WHERE id = ?;
+    """
+    db.execute_and_commit(room_update_query, (clue_id, room_id))
+    _send_room_update_to_redis(redis_db, room_id)
+
+    time.sleep(CLUE_PREPARE_TIME)
+
+    room_update_query = f"""
+        UPDATE {JeopartyDb.ROOM}
         SET current_clue_id = ?, current_clue_stage = 'answering'
         WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (clue_id, room_id))
+    _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_submit(db, room_id, clue_id, redis_db)
+    wait_for_players_to_submit(db, room_id, clue_id)
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'grading' WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (room_id,))
+    _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_grade(db, room_id, clue_id, redis_db)
+    wait_for_players_to_grade(db, room_id, clue_id)
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET current_clue_stage = NULL WHERE id = ?;
+        UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'finished' WHERE id = ?;
     """
     db.execute_and_commit(room_update_query, (room_id,))
+    _send_room_update_to_redis(redis_db, room_id)
 
     insert_reached_clue_query = f"""
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (?, ?);
@@ -135,7 +149,7 @@ def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
     return submitted_player_ids == all_player_ids
 
 
-def wait_for_game_to_be_started(db, room_id, redis_db):
+def wait_for_game_to_be_started(db, room_id):
     has_game_been_started = False
     game_start_timeout = False
     start_time = time.time()
@@ -150,11 +164,9 @@ def wait_for_game_to_be_started(db, room_id, redis_db):
         )
         game_start_timeout = time.time() - start_time > GAME_START_TIME_LIMIT
         time.sleep(WHILE_LOOP_SLEEP)
-    _send_room_update_to_redis(redis_db, room_id)
 
 
-def wait_for_players_to_submit(db, room_id, clue_id, redis_db):
-    _send_room_update_to_redis(redis_db, room_id)
+def wait_for_players_to_submit(db, room_id, clue_id):
     all_players_submitted = False
     response_timeout = False
     start_time = time.time()
@@ -162,11 +174,9 @@ def wait_for_players_to_submit(db, room_id, clue_id, redis_db):
         all_players_submitted = get_did_all_players_submit(db, room_id, clue_id)
         response_timeout = time.time() - start_time > RESPONSE_TIME_LIMIT
         time.sleep(WHILE_LOOP_SLEEP)
-    _send_room_update_to_redis(redis_db, room_id)
 
 
-def wait_for_players_to_grade(db, room_id, clue_id, redis_db):
-    _send_room_update_to_redis(redis_db, room_id)
+def wait_for_players_to_grade(db, room_id, clue_id):
     all_players_submitted = False
     response_timeout = False
     start_time = time.time()
@@ -176,4 +186,3 @@ def wait_for_players_to_grade(db, room_id, clue_id, redis_db):
         )
         response_timeout = time.time() - start_time > GRADING_TIME_LIMIT
         time.sleep(WHILE_LOOP_SLEEP)
-    _send_room_update_to_redis(redis_db, room_id)
