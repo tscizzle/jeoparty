@@ -59,6 +59,18 @@ def get_current_room():
     return {"room": room}
 
 
+@app.route("/get-players-in-room")
+def get_players_in_room():
+    db = get_db()
+    room_id = request.json["room_id"]
+
+    players_query = f"""SELECT * FROM {JeopartyDb.USER} WHERE room_id = ?;"""
+    player_rows = db.execute_and_fetch(players_query, (room_id,))
+
+    players = [dict(player_row) for player_row in player_rows]
+    return {"players": players}
+
+
 @app.route("/create-room", methods=["POST"])
 def create_room():
     jarchive_id = load_db_for_source_game()
@@ -107,7 +119,7 @@ def join_room():
     if room_row is not None:
         user_update_query = f"""
             UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = false
-                WHERE browser_id = ?;
+            WHERE browser_id = ?;
         """
         room_id = room_row["id"]
         browser_id = get_browser_id_from_cookie(request)
@@ -117,25 +129,54 @@ def join_room():
         return {"success": False, "reason": f"Room {room_code} does not exist."}
 
 
+@app.route("/leave-room", methods=["POST"])
+def leave_room():
+    # Set the current User as having no Room.
+    db = get_db()
+    browser_id = get_browser_id_from_cookie(request)
+
+    user_update_query = f"""
+        UPDATE {JeopartyDb.USER} SET room_id = ? WHERE browser_id = ?;
+    """
+    db.execute_and_commit(user_update_query, (None, browser_id))
+
+    return {"success": True}
+
+
+@app.route("/start-game", methods=["POST"])
+def start_game():
+    # Set the current Room as having started.
+    db = get_db()
+    room_id = request.json["roomId"]
+
+    room_update_query = f"""
+        UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE room_id = ?;
+    """
+    db.execute_and_commit(room_update_query, (room_id,))
+
+    return {"success": True}
+
+
 @app.route("/submit-response", methods=["POST"])
 def submit_response():
     # Add the submission to the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
     user_id = db.get_user_by_browser_id(browser_id)
-    clue_id = request.json["clueID"]
-    room_id = request.json["roomID"]
+    clue_id = request.json["clueId"]
+    room_id = request.json["roomId"]
     submission_text = request.json["submissionText"]
     is_fake_guess = request.json["isFakeGuess"]
 
-    submission_insert_query = (
-        f"INSERT INTO {JeopartyDb.SUBMISSION} (user_id, clue_id, room_id, text, "
-        f"is_fake_guess) VALUES (?, ?);"
-    )
+    submission_insert_query = f"""
+        INSERT INTO {JeopartyDb.SUBMISSION}
+        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?);
+    """
     db.execute_and_commit(
         submission_insert_query,
-        (user_id, clue_id, room_id, submission_text, is_fake_guess)
+        (user_id, clue_id, room_id, submission_text, is_fake_guess),
     )
+
     return {"success": True}
 
 
@@ -145,27 +186,15 @@ def grade_response():
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
     user_id = db.get_user_by_browser_id(browser_id)
-    clue_id = request.json["clueID"]
-    room_id = request.json["roomID"]
+    clue_id = request.json["clueId"]
+    room_id = request.json["roomId"]
     is_correct = request.json["isCorrect"]
 
     grade_response_query = f"""
-                UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ? 
-                WHERE user_id = ? AND clue_id = ? AND room_id = ?;
-            """
-    db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))
-    return {"success": True}
-
-
-@app.route("/leave-room", methods=["POST"])
-def leave_room():
-    # Set the current User as having no Room.
-    db = get_db()
-    user_update_query = f"""
-        UPDATE {JeopartyDb.USER} SET room_id = ? WHERE browser_id = ?;
+        UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ? 
+        WHERE user_id = ? AND clue_id = ? AND room_id = ?;
     """
-    browser_id = get_browser_id_from_cookie(request)
-    db.execute_and_commit(user_update_query, (None, browser_id))
+    db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))
 
     return {"success": True}
 

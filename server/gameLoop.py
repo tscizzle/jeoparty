@@ -11,6 +11,11 @@ RESPONSE_TIME_LIMIT = 0.2
 GRADING_TIME_LIMIT = 0.2
 
 
+#####
+## Main loop
+#####
+
+
 def game_loop(room_id):
     try:
 
@@ -43,6 +48,11 @@ def game_loop(room_id):
         print(traceback.format_exc())
 
 
+#####
+## Helpers
+#####
+
+
 def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     clue_id = next_clue_row["id"]
     money = next_clue_row["money"]
@@ -51,21 +61,22 @@ def run_next_clue(next_clue_row, db, room_id, redis_db, room_sub_key):
     print(f"DISPLAY THIS: {money} {clue} {answer}")
 
     room_update_query = f"""
-            UPDATE {JeopartyDb.ROOM} SET current_clue_id = ?, clue_stage = 'answering' WHERE room_id = ?;
-        """
+        UPDATE {JeopartyDb.ROOM} SET current_clue_id = ?, clue_stage = 'answering'
+        WHERE room_id = ?;
+    """
     db.execute_and_commit(room_update_query, (clue_id, room_id))
 
     wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key)
 
     room_update_query = f"""
-                UPDATE {JeopartyDb.ROOM} SET clue_stage = 'grading' WHERE room_id = ?;
-            """
+        UPDATE {JeopartyDb.ROOM} SET clue_stage = 'grading' WHERE room_id = ?;
+    """
     db.execute_and_commit(room_update_query, (room_id,))
     wait_for_players_to_grade(db, room_id, redis_db, room_sub_key)
 
     room_update_query = f"""
-                    UPDATE {JeopartyDb.ROOM} SET clue_stage = null WHERE room_id = ?;
-                """
+        UPDATE {JeopartyDb.ROOM} SET clue_stage = NULL WHERE room_id = ?;
+    """
     db.execute_and_commit(room_update_query, (room_id,))
 
     insert_reached_clue_query = f"""
@@ -112,11 +123,11 @@ def wait_for_game_to_be_started(db, room_id):
 
 
 def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
+    grading_clause = " AND is_correct IS NOT NULL" if check_grading else ""
     submission_query = f"""
-        SELECT user_id FROM {JeopartyDb.SUBMISSION} WHERE room_id = ? AND clue_id = ?;
+        SELECT user_id FROM {JeopartyDb.SUBMISSION}
+        WHERE room_id = ? AND clue_id = ? {grading_clause};
     """
-    if check_grading:
-        submission_query += " AND is_correct is not null"
     submission_rows = db.execute_and_fetch(submission_query, (room_id, clue_id))
     submitted_player_ids = set(row["user_id"] for row in submission_rows)
 
@@ -127,10 +138,6 @@ def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
     all_player_ids = set(row["id"] for row in player_rows)
 
     return submitted_player_ids == all_player_ids
-
-
-def get_did_all_players_grade(db, room_id, clue_id):
-    return get_did_all_players_submit(db, room_id, clue_id, check_grading=True)
 
 
 def wait_for_players_to_submit(db, room_id, clue_id, redis_db, room_sub_key):
@@ -151,7 +158,9 @@ def wait_for_players_to_grade(db, room_id, clue_id, redis_db, room_sub_key):
     response_timeout = False
     start_time = time.time()
     while not all_players_submitted and not response_timeout:
-        all_players_submitted = get_did_all_players_grade(db, room_id, clue_id)
+        all_players_submitted = get_did_all_players_submit(
+            db, room_id, clue_id, check_grading=True
+        )
         response_timeout = time.time() - start_time > GRADING_TIME_LIMIT
         time.sleep(WHILE_LOOP_SLEEP)
     _send_room_update_to_redis(redis_db, room_sub_key)
