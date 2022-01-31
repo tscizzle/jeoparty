@@ -69,10 +69,11 @@ const createRoom = () => {
   return nicePOST("/create-room");
 };
 
-const joinRoom = ({ roomCode, nameToRegister }) => {
+const joinRoom = ({ roomCode, nameToRegister, canvasImageBlob }) => {
   return nicePOST("/join-room", {
     roomCode,
-    nameToRegister
+    nameToRegister,
+    canvasImageBlob
   });
 };
 

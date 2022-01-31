@@ -124,15 +124,15 @@ def join_room():
         player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
         redis_db.publish(room_sub_key, player_joined_msg)
 
-        # register the user to this room
+        # register the user and the image blob to this room
         name_to_register = request.json["nameToRegister"]
+        canvasImageBlob = request.json["canvasImageBlob"]
         # Set the current User as having no Room.
         db = get_db()
-
         user_update_query = f"""
-            UPDATE {JeopartyDb.USER} SET registered_name = ? WHERE browser_id = ?;
+            UPDATE {JeopartyDb.USER} SET registered_name = ?, image_blob = ? WHERE browser_id = ?;
         """
-        db.execute_and_commit(user_update_query, (name_to_register, browser_id))
+        db.execute_and_commit(user_update_query, (name_to_register, canvasImageBlob, browser_id))
         redis_db = get_redis_db()
 
         room_id = db.get_room_by_browser_id(browser_id)["id"]

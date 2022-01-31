@@ -4,6 +4,7 @@ CREATE TABLE user (
     room_id INTEGER,  -- foreign key
     is_host BOOLEAN,
     registered_name TEXT,
+    image_blob TEXT,
     FOREIGN KEY(room_id) REFERENCES room(room_id)
 );
 
