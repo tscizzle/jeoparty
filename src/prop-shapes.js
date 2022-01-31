@@ -22,6 +22,16 @@ export const roomShape = PropTypes.shape({
   ]),
 });
 
+export const submissionShape = PropTypes.shape({
+  id: PropTypes.number.isRequired,
+  user_id: PropTypes.number.isRequired,
+  clue_id: PropTypes.number.isRequired,
+  room_id: PropTypes.number.isRequired,
+  text: PropTypes.string,
+  is_correct: PropTypes.oneOf([0, 1]),
+  is_fake_guess: PropTypes.oneOf([0, 1]).isRequired,
+});
+
 export const sourceGameShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
   taped_date: PropTypes.instanceOf(Date).isRequired,

@@ -63,20 +63,18 @@ def get_current_room():
     browser_id = get_browser_id_from_cookie(request)
     user = db.get_user_by_browser_id(browser_id)
 
-    # Get the Room associated with that User (if there is such a Room).
     room_row = None
     if user["room_id"] is not None:
         room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
         room_id = user["room_id"]
         room_row = db.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
 
-    # Send back the Room.
     room = dict(room_row) if room_row is not None else None
     return {"room": room}
 
 
-@app.route("/get-players-in-room/<room_id>")
-def get_players_in_room(room_id):
+@app.route("/get-players/<room_id>")
+def get_players(room_id):
     db = get_db()
 
     players_query = f"""
@@ -178,6 +176,19 @@ def start_game(room_id):
     db.execute_and_commit(room_update_query, (room_id,))
 
     return {"success": True}
+
+
+@app.route("/get-submissions/<room_id>")
+def get_submissions(room_id):
+    db = get_db()
+
+    submission_query = f"""SELECT * FROM {JeopartyDb.SUBMISSION} WHERE room_id = ?;"""
+    submission_rows = db.execute_and_fetch(submission_query, (room_id,))
+
+    submissions = {
+        submission_row["id"]: dict(submission_row) for submission_row in submission_rows
+    }
+    return {"submissions": submissions}
 
 
 @app.route("/submit-response", methods=["POST"])

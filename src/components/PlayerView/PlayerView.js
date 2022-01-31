@@ -34,15 +34,15 @@ class PlayerView extends Component {
     return (
       <div className="player-view">
         <h1 className="player-name-header">PLAYER NAME: {currentUser.name}</h1>
-          <div className="player-input">
-            <input
-                placeholder="Enter text"
-                value={typedPlayerName}
-                onChange={this.onChangeTypedPlayerName}
-              />
-            <button onClick={this.registerName}>Register Name</button>
-            <button onClick={this.leaveRoom}>Leave Room</button>
-          </div>
+        <div className="player-input">
+          <input
+            placeholder="Enter text"
+            value={typedPlayerName}
+            onChange={this.onChangeTypedPlayerName}
+          />
+          <button onClick={this.registerName}>Register Name</button>
+          <button onClick={this.leaveRoom}>Leave Room</button>
+        </div>
       </div>
     );
   }
@@ -75,6 +75,5 @@ class PlayerView extends Component {
 PlayerView = withCurrentUser(PlayerView);
 PlayerView = withCurrentRoom(PlayerView);
 PlayerView = withJGameData(PlayerView);
-
 
 export default PlayerView;

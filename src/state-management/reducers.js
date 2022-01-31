@@ -3,7 +3,8 @@ import {
   FETCH_CURRENT_USER_FAILURE,
   FETCH_CURRENT_ROOM_SUCCESS,
   FETCH_CURRENT_ROOM_FAILURE,
-  FETCH_PLAYERS_IN_ROOM_SUCCESS,
+  FETCH_PLAYERS_SUCCESS,
+  FETCH_SUBMISSIONS_SUCCESS,
   FETCH_J_GAME_DATA_SUCCESS,
   FETCH_J_GAME_DATA_FAILURE,
 } from "state-management/actions";
@@ -14,7 +15,8 @@ const getInitialState = () => ({
   hasAttemptedFetchCurrentUser: false,
   currentRoom: null,
   hasAttemptedFetchCurrentRoom: false,
-  playersInRoom: null,
+  players: null,
+  submissions: null,
   jGameData: null,
 });
 
@@ -66,10 +68,18 @@ const mainReducer = (state = getInitialState(), action) => {
       break;
     }
 
-    case FETCH_PLAYERS_IN_ROOM_SUCCESS: {
+    case FETCH_PLAYERS_SUCCESS: {
       newState = {
         ...state,
-        playersInRoom: action.players,
+        players: action.players,
+      };
+      break;
+    }
+
+    case FETCH_SUBMISSIONS_SUCCESS: {
+      newState = {
+        ...state,
+        submissions: action.submissions,
       };
       break;
     }

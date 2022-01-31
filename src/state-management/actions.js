@@ -8,8 +8,11 @@ export const FETCH_CURRENT_USER_FAILURE = "FETCH_CURRENT_USER_FAILURE";
 export const FETCH_CURRENT_ROOM_SUCCESS = "FETCH_CURRENT_ROOM_SUCCESS";
 export const FETCH_CURRENT_ROOM_FAILURE = "FETCH_CURRENT_ROOM_FAILURE";
 
-export const FETCH_PLAYERS_IN_ROOM_SUCCESS = "FETCH_PLAYERS_IN_ROOM_SUCCESS";
-export const FETCH_PLAYERS_IN_ROOM_FAILURE = "FETCH_PLAYERS_IN_ROOM_FAILURE";
+export const FETCH_PLAYERS_SUCCESS = "FETCH_PLAYERS_SUCCESS";
+export const FETCH_PLAYERS_FAILURE = "FETCH_PLAYERS_FAILURE";
+
+export const FETCH_SUBMISSIONS_SUCCESS = "FETCH_SUBMISSIONS_SUCCESS";
+export const FETCH_SUBMISSIONS_FAILURE = "FETCH_SUBMISSIONS_FAILURE";
 
 export const FETCH_J_GAME_DATA_SUCCESS = "FETCH_J_GAME_DATA_SUCCESS";
 export const FETCH_J_GAME_DATA_FAILURE = "FETCH_J_GAME_DATA_FAILURE";
@@ -68,16 +71,31 @@ export const fetchCurrentRoom = () => {
   };
 };
 
-const fetchPlayersInRoomSuccess = ({ players }) => ({
-  type: FETCH_PLAYERS_IN_ROOM_SUCCESS,
+const fetchPlayersSuccess = ({ players }) => ({
+  type: FETCH_PLAYERS_SUCCESS,
   players,
 });
 
-export const fetchPlayersInRoom = ({ roomId }) => {
+export const fetchPlayers = ({ roomId }) => {
   return (dispatch) => {
-    api.getPlayersInRoom({ roomId }).then(({ players }) => {
+    api.getPlayers({ roomId }).then(({ players }) => {
       if (players) {
-        dispatch(fetchPlayersInRoomSuccess({ players }));
+        dispatch(fetchPlayersSuccess({ players }));
+      }
+    });
+  };
+};
+
+const fetchSubmissionsSuccess = ({ submissions }) => ({
+  type: FETCH_SUBMISSIONS_SUCCESS,
+  submissions,
+});
+
+export const fetchSubmissions = ({ roomId }) => {
+  return (dispatch) => {
+    api.getSubmissions({ roomId }).then(({ submissions }) => {
+      if (submissions) {
+        dispatch(fetchSubmissionsSuccess({ submissions }));
       }
     });
   };

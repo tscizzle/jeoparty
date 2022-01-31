@@ -4,10 +4,16 @@ import _ from "lodash";
 
 import api from "api";
 
-import { userShape, roomShape, jGameDataShape } from "prop-shapes";
+import {
+  userShape,
+  roomShape,
+  submissionShape,
+  jGameDataShape,
+} from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
-import withPlayersInRoom from "state-management/state-connectors/with-players-in-room";
+import withPlayers from "state-management/state-connectors/with-players";
+import withSubmissions from "state-management/state-connectors/with-submissions";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import JGameDisplay from "components/JGameDisplay/JGameDisplay";
@@ -19,8 +25,8 @@ class LobbyView extends Component {
   static propTypes = {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
-    /* supplied by withPlayersInRoom */
-    playersInRoom: PropTypes.objectOf(userShape),
+    /* supplied by withPlayers */
+    players: PropTypes.objectOf(userShape),
   };
 
   state = {
@@ -30,9 +36,9 @@ class LobbyView extends Component {
   /* Lifecycle methods. */
 
   render() {
-    const { playersInRoom } = this.props;
+    const { players } = this.props;
 
-    const playerList = _(playersInRoom)
+    const playerList = _(players)
       .values()
       .map((player) => (
         <div key={player.id}>{player.registered_name || player.id}</div>
@@ -72,7 +78,7 @@ class LobbyView extends Component {
 }
 
 LobbyView = withCurrentRoom(LobbyView);
-LobbyView = withPlayersInRoom(LobbyView);
+LobbyView = withPlayers(LobbyView);
 
 class HostControls extends Component {
   static propTypes = {
@@ -126,6 +132,82 @@ class HostControls extends Component {
 HostControls = withCurrentUser(HostControls);
 HostControls = withCurrentRoom(HostControls);
 
+class Scoreboard extends Component {
+  static propTypes = {
+    /* supplied by withPlayers */
+    players: PropTypes.objectOf(userShape),
+    /* supplied by withSubmissions */
+    submissions: PropTypes.objectOf(submissionShape),
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
+  };
+
+  /* Lifecycle methods. */
+
+  render() {
+    const { players } = this.props;
+
+    const playersWithScores = _.mapValues(players, (player) => {
+      const { points, shadowPoints } = this.getScoresForPlayer({
+        userId: player.id,
+      });
+      const playerWithScores = { ...player, points, shadowPoints };
+      return playerWithScores;
+    });
+
+    const scoresList = _(playersWithScores)
+      .values()
+      .orderBy("points")
+      .map((p) => (
+        <div className="scoreboard-row" key={p.id}>
+          <div className="scoreboard-player-name">
+            {p.registered_name || p.id}
+          </div>
+          <div className="scoreboard-player-values">
+            <div className="scoreboard-player-points">{p.points}</div>
+            <div className="scoreboard-player-shadow-points">
+              ({p.shadowPoints})
+            </div>
+          </div>
+        </div>
+      ))
+      .value();
+
+    return <div className="scoreboard">{scoresList}</div>;
+  }
+
+  /* Helpers. */
+
+  getScoresForPlayer = ({ userId }) => {
+    const { submissions, jGameData } = this.props;
+
+    const { clues } = jGameData;
+
+    const submissionsForPlayer = _.pickBy(submissions, { user_id: userId });
+
+    let points = 0;
+    let shadowPoints = 0;
+    _.each(submissionsForPlayer, (submission) => {
+      const clue = clues[submission.clue_id];
+      if (clue.money) {
+        if (submission.is_correct === 1) {
+          // Always add to shadow points.
+          shadowPoints += clue.money;
+          // Only add to real points if not a fake guess.
+          if (!submission.is_fake_guess) {
+            points += clue.money;
+          }
+        }
+      }
+    });
+    return { points, shadowPoints };
+  };
+}
+
+Scoreboard = withPlayers(Scoreboard);
+Scoreboard = withSubmissions(Scoreboard);
+Scoreboard = withJGameData(Scoreboard);
+
 class HostView extends Component {
   static propTypes = {
     /* supplied by withCurrentRoom */
@@ -138,7 +220,7 @@ class HostView extends Component {
     const { currentRoom, jGameData } = this.props;
 
     const showLoading = !jGameData;
-    const showGame = currentRoom.has_game_been_started && jGameData;
+    const showGame = Boolean(currentRoom.has_game_been_started && jGameData);
 
     return (
       <div
@@ -147,6 +229,7 @@ class HostView extends Component {
       >
         {showLoading && <div>Loading…</div>}
         {showGame ? <JGameDisplay /> : <LobbyView />}
+        {showGame && <Scoreboard />}
         <HostControls />
       </div>
     );

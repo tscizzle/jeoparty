@@ -67,8 +67,8 @@ const getCurrentRoom = () => {
   return niceGET("/get-current-room");
 };
 
-const getPlayersInRoom = ({ roomId }) => {
-  return niceGET(`/get-players-in-room/${roomId}`);
+const getPlayers = ({ roomId }) => {
+  return niceGET(`/get-players/${roomId}`);
 };
 
 const createRoom = () => {
@@ -86,15 +86,11 @@ const leaveRoom = () => {
 };
 
 const startGame = ({ roomId }) => {
-  return nicePOST(`/start-game/${roomId}`, {
-    roomId,
-  });
+  return nicePOST(`/start-game/${roomId}`);
 };
 
-const subscribeToRoomUpdates = ({ roomId }) => {
-  const baseUrl = isDev() ? "http://localhost:5000" : NICE_SERVER_URL;
-  const url = new URL(`${baseUrl}/subscribe-to-room-updates/${roomId}`);
-  return new EventSource(url);
+const getSubmissions = ({ roomId }) => {
+  return niceGET(`/get-submissions/${roomId}`);
 };
 
 const getJGameData = ({ sourceGameId }) => {
@@ -107,17 +103,24 @@ const getJGameData = ({ sourceGameId }) => {
   });
 };
 
+const subscribeToRoomUpdates = ({ roomId }) => {
+  const baseUrl = isDev() ? "http://localhost:5000" : NICE_SERVER_URL;
+  const url = new URL(`${baseUrl}/subscribe-to-room-updates/${roomId}`);
+  return new EventSource(url);
+};
+
 const api = {
   getCurrentUser,
   registerName,
   getCurrentRoom,
-  getPlayersInRoom,
+  getPlayers,
   createRoom,
   joinRoom,
   leaveRoom,
   startGame,
-  subscribeToRoomUpdates,
+  getSubmissions,
   getJGameData,
+  subscribeToRoomUpdates,
 };
 
 export default api;
