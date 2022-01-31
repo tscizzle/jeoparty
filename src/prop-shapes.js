@@ -6,6 +6,7 @@ export const userShape = PropTypes.shape({
   room_id: PropTypes.number,
   is_host: PropTypes.oneOf([0, 1]),
   name: PropTypes.string,
+  image_blob: PropTypes.string,
 });
 
 export const roomShape = PropTypes.shape({
