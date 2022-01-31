@@ -125,12 +125,11 @@ class JoinRoomView extends Component {
           <CanvasDraw
             ref={(canvasDraw) => (this.saveableCanvas = canvasDraw)}
             brushColor="black"
-            lazyRadius="1"
+            lazyRadius={1}
             catenaryColor="white"
-            brushRadius="3"
+            brushRadius={3}
             hideGridX
             hideGridY
-            saveData
           />
         </div>
         <div>
