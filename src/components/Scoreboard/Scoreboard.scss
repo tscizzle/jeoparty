@@ -1,0 +1,34 @@
+@import "../../vars";
+
+.scoreboard {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border-radius: 0 0 10px 0;
+  box-shadow: 10px 10px 10px $darkest;
+  background-color: $lighter;
+  color: $darkest;
+
+  .scoreboard-row {
+    display: flex;
+    justify-content: space-between;
+
+    .scoreboard-player-name {
+      margin-right: 20px;
+      font-weight: bold;
+    }
+
+    .scoreboard-player-values {
+      display: flex;
+      justify-content: flex-end;
+
+      .scoreboard-player-shadow-points {
+        margin-left: 10px;
+        color: $darkGray;
+      }
+    }
+  }
+}
