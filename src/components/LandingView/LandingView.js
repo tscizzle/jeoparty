@@ -1,4 +1,7 @@
 import React, { Component } from "react";
+import ReactDOM from "react-dom";
+import CanvasDraw from "react-canvas-draw";
+
 import PropTypes from "prop-types";
 
 import api from "api";
@@ -119,6 +122,16 @@ class JoinRoomView extends Component {
             value={typedPlayerName}
             onChange={this.onChangeTypedPlayerName}
           />
+          <CanvasDraw
+            ref={(canvasDraw) => (this.saveableCanvas = canvasDraw)}
+            brushColor="black"
+            lazyRadius="1"
+            catenaryColor="white"
+            brushRadius="3"
+            hideGridX
+            hideGridY
+            saveData
+          />
         </div>
         <div>
           <button onClick={this.joinRoom}> Join Room </button>
@@ -148,10 +161,14 @@ class JoinRoomView extends Component {
   joinRoom = () => {
     const { fetchCurrentUser, fetchCurrentRoom } = this.props;
     const { typedRoomCode, typedPlayerName } = this.state;
-
+    const canvasImageBlob = this.saveableCanvas.getSaveData();
     this.setState({ isLoadingRoom: true }, () => {
       api
-        .joinRoom({ roomCode: typedRoomCode, nameToRegister: typedPlayerName })
+        .joinRoom({
+          roomCode: typedRoomCode,
+          nameToRegister: typedPlayerName,
+          canvasImageBlob: canvasImageBlob,
+        })
         .then((res) => {
           if (res.success) {
             return Promise.all([fetchCurrentUser(), fetchCurrentRoom()]);
