@@ -55,7 +55,7 @@ def register_name():
     db.execute_and_commit(user_update_query, (name_to_register, browser_id))
     redis_db = get_redis_db()
 
-    room_id = db.get_room_by_browser_id(browser_id)['id']
+    room_id = db.get_room_by_browser_id(browser_id)["id"]
     room_sub_key = get_room_subscription_key(room_id)
     player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
     redis_db.publish(room_sub_key, player_joined_msg)
@@ -191,12 +191,12 @@ def get_submissions(room_id):
 
 @app.route("/submit-response", methods=["POST"])
 def submit_response():
-    # Add the submission to the db
+    # Add the Submission to the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
     user_id = db.get_user_by_browser_id(browser_id)
+    room_id = db.get_room_by_browser_id(browser_id)
     clue_id = request.json["clueId"]
-    room_id = request.json["roomId"]
     submission_text = request.json["submissionText"]
     is_fake_guess = request.json["isFakeGuess"]
 
