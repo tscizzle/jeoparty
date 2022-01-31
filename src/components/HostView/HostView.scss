@@ -18,8 +18,24 @@
     background-color: #eee;
     color: black;
 
-    .player-scores-row {
+    .scoreboard-row {
       display: flex;
+      justify-content: space-between;
+
+      .scoreboard-player-name {
+        margin-right: 20px;
+        font-weight: bold;
+      }
+
+      .scoreboard-player-values {
+        display: flex;
+        justify-content: flex-end;
+
+        .scoreboard-player-shadow-points {
+          margin-left: 10px;
+          opacity: 0.8;
+        }
+      }
     }
   }
 
