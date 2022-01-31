@@ -132,7 +132,9 @@ def join_room():
         user_update_query = f"""
             UPDATE {JeopartyDb.USER} SET registered_name = ?, image_blob = ? WHERE browser_id = ?;
         """
-        db.execute_and_commit(user_update_query, (name_to_register, canvasImageBlob, browser_id))
+        db.execute_and_commit(
+            user_update_query, (name_to_register, canvasImageBlob, browser_id)
+        )
         redis_db = get_redis_db()
 
         room_id = db.get_room_by_browser_id(browser_id)["id"]
@@ -190,15 +192,17 @@ def submit_response():
     # Add the Submission to the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
-    user_id = db.get_user_by_browser_id(browser_id)
-    room_id = db.get_room_by_browser_id(browser_id)
+    user = db.get_user_by_browser_id(browser_id)
+    room = db.get_room_by_browser_id(browser_id)
+    user_id = user["id"]
+    room_id = room["id"]
     clue_id = request.json["clueId"]
     submission_text = request.json["submissionText"]
     is_fake_guess = request.json["isFakeGuess"]
 
     submission_insert_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
-        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?);
+        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?, ?, ?, ?);
     """
     db.execute_and_commit(
         submission_insert_query,
@@ -213,13 +217,15 @@ def grade_response():
     # Set is_correct in the Submission table in the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
-    user_id = db.get_user_by_browser_id(browser_id)
+    user = db.get_user_by_browser_id(browser_id)
+    room = db.get_room_by_browser_id(browser_id)
+    user_id = user["id"]
+    room_id = room["id"]
     clue_id = request.json["clueId"]
-    room_id = request.json["roomId"]
     is_correct = request.json["isCorrect"]
 
     grade_response_query = f"""
-        UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ? 
+        UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ?
         WHERE user_id = ? AND clue_id = ? AND room_id = ?;
     """
     db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))

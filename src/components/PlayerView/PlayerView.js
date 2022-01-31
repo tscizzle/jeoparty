@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import _ from "lodash";
 
 import api from "api";
 
@@ -15,7 +16,6 @@ class AnsweringForm extends Component {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     /* supplied by withSubmissions */
-    submissions: PropTypes.objectOf(submissionShape).isRequired,
     fetchSubmissions: PropTypes.func.isRequired,
   };
 
@@ -97,6 +97,21 @@ class AnsweringForm extends Component {
 AnsweringForm = withCurrentRoom(AnsweringForm);
 AnsweringForm = withSubmissions(AnsweringForm);
 
+class SubmittedAnswer extends Component {
+  static propTypes = {
+    submission: submissionShape.isRequired,
+  };
+
+  render() {
+    const { submission } = this.props;
+
+    const fakeGuessText = submission.is_fake_guess ? " (fake guess)" : "";
+    const displayText = `${submission.text}${fakeGuessText}`;
+
+    return <div className="submitted-answer">{displayText}</div>;
+  }
+}
+
 class PlayerView extends Component {
   static propTypes = {
     /* supplied by withCurrentUser */
@@ -105,23 +120,43 @@ class PlayerView extends Component {
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
+    /* supplied by withSubmissions */
+    submissions: PropTypes.objectOf(submissionShape),
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { currentRoom } = this.props;
+    const { currentUser, currentRoom, submissions } = this.props;
 
+    const { id: user_id } = currentUser;
     const { current_clue_id, current_clue_stage } = currentRoom;
 
+    let currentSubmission;
+    if (submissions) {
+      currentSubmission = _(submissions)
+        .values()
+        .find({ clue_id: current_clue_id, user_id });
+    }
+
     const showAnsweringForm = Boolean(
-      current_clue_id && current_clue_stage === "answering"
+      current_clue_id &&
+        current_clue_stage === "answering" &&
+        !currentSubmission
+    );
+    const showSubmittedAnswer = Boolean(
+      current_clue_id && current_clue_stage === "answering" && currentSubmission
     );
 
     return (
       <div className="player-view">
         {showAnsweringForm && <AnsweringForm />}
-        <button onClick={this.leaveRoom}>Leave Room</button>
+        {showSubmittedAnswer && (
+          <SubmittedAnswer submission={currentSubmission} />
+        )}
+        <div className="player-view-footer">
+          <button onClick={this.leaveRoom}>Leave Room</button>
+        </div>
       </div>
     );
   }
@@ -140,5 +175,6 @@ class PlayerView extends Component {
 
 PlayerView = withCurrentUser(PlayerView);
 PlayerView = withCurrentRoom(PlayerView);
+PlayerView = withSubmissions(PlayerView);
 
 export default PlayerView;

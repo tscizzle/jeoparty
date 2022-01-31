@@ -1,10 +1,12 @@
+@import "../../vars";
+
 .host-view {
   display: flex;
   justify-content: center;
   align-items: flex-end;
   width: 100vw;
   height: 100vh;
-  color: white;
+  color: $white;
 
   .scoreboard {
     position: absolute;
@@ -14,9 +16,9 @@
     flex-direction: column;
     padding: 15px;
     border-radius: 0 0 10px 0;
-    box-shadow: 10px 10px 10px black;
-    background-color: #eee;
-    color: black;
+    box-shadow: 10px 10px 10px $darkest;
+    background-color: $lighter;
+    color: $darkest;
 
     .scoreboard-row {
       display: flex;
@@ -49,9 +51,9 @@
     align-items: center;
     padding: 15px;
     border-radius: 0 0 0 10px;
-    box-shadow: 10px 10px 10px black;
-    background-color: #eee;
-    color: black;
+    box-shadow: 10px 10px 10px $darkest;
+    background-color: $lighter;
+    color: $darkest;
 
     .room-code {
       font-size: 2em;

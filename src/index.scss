@@ -7,12 +7,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+// Use the box model on everything (is generally simpler).
+* {
+  box-sizing: border-box;
+}
+// And apparently different browsers have different defaults for input box-sizing.
+input {
+  box-sizing: border-box;
 }
 
 /*
+
 Project-wide z-index values (so it's never surprising what appears on top of what).
 
 10: fullscreen clue

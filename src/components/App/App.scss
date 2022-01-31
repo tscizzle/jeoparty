@@ -1,3 +1,5 @@
+@import "../../vars";
+
 .app {
   display: flex;
   flex-direction: column;
@@ -7,18 +9,18 @@
   height: 100%;
 
   .room-code-error {
-    color: red;
+    color: $red;
   }
 }
 
 table {
-  border: solid 1px #555;
+  border: solid 1px $dark;
 }
 
 tr {
-  border: solid 1px #555;
+  border: solid 1px $dark;
 }
 
 td {
-  border: solid 1px #555;
+  border: solid 1px $dark;
 }

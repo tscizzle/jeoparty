@@ -14,8 +14,7 @@ RESPONSE_TIME_LIMIT = 60
 GRADING_TIME_LIMIT = 20
 
 # FOR TESTING
-RESPONSE_TIME_LIMIT = 1000
-GRADING_TIME_LIMIT = 1
+GRADING_TIME_LIMIT = 1000
 
 
 #####
@@ -141,7 +140,7 @@ def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
     submitted_player_ids = set(row["user_id"] for row in submission_rows)
 
     player_query = f"""
-        SELECT id FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 0;
+        SELECT id FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host = 0;
     """
     player_rows = db.execute_and_fetch(player_query, (room_id,))
     all_player_ids = set(row["id"] for row in player_rows)
