@@ -237,11 +237,13 @@ def grade_response():
     clue_id = request.json["clueId"]
     graded_as = request.json["gradedAs"]
 
+    # This combo insert-update is how SQLite does upserts.
     grade_response_query = f"""
-        UPDATE {JeopartyDb.SUBMISSION} SET graded_as = ?
-        WHERE user_id = ? AND clue_id = ? AND room_id = ?;
+        INSERT INTO {JeopartyDb.SUBMISSION}
+        (user_id, clue_id, room_id, graded_as) VALUES (?, ?, ?, ?)
+        ON CONFLICT DO UPDATE SET graded_as = excluded.graded_as;
     """
-    db.execute_and_commit(grade_response_query, (graded_as, user_id, clue_id, room_id))
+    db.execute_and_commit(grade_response_query, (user_id, clue_id, room_id, graded_as))
 
     return {"success": True}
 
