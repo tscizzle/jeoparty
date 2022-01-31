@@ -50,9 +50,13 @@ def get_current_room():
     return {"room": room}
 
 
-@app.route("/get-players/<room_id>")
-def get_players(room_id):
+@app.route("/get-players")
+def get_players():
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     players_query = f"""
         SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
@@ -151,6 +155,7 @@ def join_room():
 def leave_room():
     # Set the current User as having no Room.
     db = get_db()
+
     browser_id = get_browser_id_from_cookie(request)
 
     user_update_query = f"""
@@ -161,10 +166,14 @@ def leave_room():
     return {"success": True}
 
 
-@app.route("/start-game/<room_id>", methods=["POST"])
-def start_game(room_id):
+@app.route("/start-game", methods=["POST"])
+def start_game():
     # Set the current Room as having started.
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE id = ?;
@@ -174,9 +183,13 @@ def start_game(room_id):
     return {"success": True}
 
 
-@app.route("/get-submissions/<room_id>")
-def get_submissions(room_id):
+@app.route("/get-submissions")
+def get_submissions():
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     submission_query = f"""SELECT * FROM {JeopartyDb.SUBMISSION} WHERE room_id = ?;"""
     submission_rows = db.execute_and_fetch(submission_query, (room_id,))
@@ -233,10 +246,16 @@ def grade_response():
     return {"success": True}
 
 
-@app.route("/get-j-game-data/<source_game_id>")
-def get_j_game_data(source_game_id):
+@app.route("/get-j-game-data")
+def get_j_game_data():
     # For a given SourceGame, get all the data (SourceGame, Categories, Clues).
+
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    source_game_id = room["source_game_id"]
+
     source_game_query = f"SELECT * FROM {JeopartyDb.SOURCE_GAME} WHERE id = ?;"
     category_query = f"SELECT * FROM {JeopartyDb.CATEGORY} WHERE source_game_id = ?;"
     clue_query = f"SELECT * FROM {JeopartyDb.CLUE} WHERE source_game_id = ?;"

@@ -65,7 +65,7 @@ class AnsweringForm extends Component {
     const { currentRoom, fetchSubmissions } = this.props;
     const { typedResponse, isFakeGuess } = this.state;
 
-    const { id: room_id, current_clue_id } = currentRoom;
+    const { current_clue_id } = currentRoom;
 
     api
       .submitResponse({
@@ -74,23 +74,18 @@ class AnsweringForm extends Component {
         isFakeGuess,
       })
       .then(() => {
-        fetchSubmissions({ roomId: room_id });
+        fetchSubmissions();
       });
   };
 
   clickPass = () => {
     const { currentRoom, fetchSubmissions } = this.props;
 
-    const { id: room_id, current_clue_id } = currentRoom;
+    const { current_clue_id } = currentRoom;
 
-    api
-      .submitResponse({
-        clueId: current_clue_id,
-        submissionText: "",
-      })
-      .then(() => {
-        fetchSubmissions({ roomId: room_id });
-      });
+    api.submitResponse({ clueId: current_clue_id }).then(() => {
+      fetchSubmissions();
+    });
   };
 }
 

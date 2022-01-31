@@ -76,9 +76,9 @@ const fetchPlayersSuccess = ({ players }) => ({
   players,
 });
 
-export const fetchPlayers = ({ roomId }) => {
+export const fetchPlayers = () => {
   return (dispatch) => {
-    api.getPlayers({ roomId }).then(({ players }) => {
+    api.getPlayers().then(({ players }) => {
       if (players) {
         dispatch(fetchPlayersSuccess({ players }));
       }
@@ -91,9 +91,9 @@ const fetchSubmissionsSuccess = ({ submissions }) => ({
   submissions,
 });
 
-export const fetchSubmissions = ({ roomId }) => {
+export const fetchSubmissions = () => {
   return (dispatch) => {
-    api.getSubmissions({ roomId }).then(({ submissions }) => {
+    api.getSubmissions().then(({ submissions }) => {
       if (submissions) {
         dispatch(fetchSubmissionsSuccess({ submissions }));
       }
@@ -112,10 +112,10 @@ const fetchJGameDataFailure = () => ({
   type: FETCH_J_GAME_DATA_FAILURE,
 });
 
-export const fetchJGameData = ({ sourceGameId }) => {
+export const fetchJGameData = () => {
   return (dispatch) => {
     api
-      .getJGameData({ sourceGameId })
+      .getJGameData()
       .then(({ sourceGame, categories, clues }) => {
         if (sourceGame) {
           dispatch(fetchJGameDataSuccess({ sourceGame, categories, clues }));

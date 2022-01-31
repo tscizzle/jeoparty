@@ -20,7 +20,6 @@ class InRoomView extends Component {
     /* supplied by withCurrentUser */
     currentUser: userShape.isRequired,
     /* supplied by withCurrentRoom */
-    currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
     /* supplied by withPlayers */
     fetchPlayers: PropTypes.func.isRequired,
@@ -51,11 +50,11 @@ class InRoomView extends Component {
       fetchJGameData,
     } = this.props;
 
-    const { id: room_id, source_game_id } = currentRoom;
+    const { id: room_id } = currentRoom;
 
-    fetchPlayers({ roomId: room_id });
-    fetchSubmissions({ roomId: room_id });
-    fetchJGameData({ sourceGameId: source_game_id });
+    fetchPlayers();
+    fetchSubmissions();
+    fetchJGameData();
 
     const eventSource = api.subscribeToRoomUpdates({ roomId: room_id });
     eventSource.onmessage = (evt) => {
@@ -67,12 +66,12 @@ class InRoomView extends Component {
         }
 
         case "PLAYER_JOINED_ROOM": {
-          fetchPlayers({ roomId: room_id });
+          fetchPlayers();
           break;
         }
 
         case "SUBMISSION_UPDATE": {
-          fetchSubmissions({ roomId: room_id });
+          fetchSubmissions();
           break;
         }
 

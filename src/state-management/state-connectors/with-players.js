@@ -9,7 +9,7 @@ const withPlayers = (WrappedComponent) => {
   });
 
   const mapDispatchToProps = (dispatch) => ({
-    fetchPlayers: ({ roomId }) => dispatch(fetchPlayers({ roomId })),
+    fetchPlayers: () => dispatch(fetchPlayers()),
   });
 
   const mergeProps = preserveOwnProps;

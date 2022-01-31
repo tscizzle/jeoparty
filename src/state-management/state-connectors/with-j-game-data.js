@@ -9,8 +9,7 @@ const withJGameData = (WrappedComponent) => {
   });
 
   const mapDispatchToProps = (dispatch) => ({
-    fetchJGameData: ({ sourceGameId }) =>
-      dispatch(fetchJGameData({ sourceGameId })),
+    fetchJGameData: () => dispatch(fetchJGameData()),
   });
 
   const mergeProps = preserveOwnProps;

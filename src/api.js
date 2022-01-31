@@ -61,8 +61,8 @@ const getCurrentRoom = () => {
   return niceGET("/get-current-room");
 };
 
-const getPlayers = ({ roomId }) => {
-  return niceGET(`/get-players/${roomId}`);
+const getPlayers = () => {
+  return niceGET(`/get-players`);
 };
 
 const createRoom = () => {
@@ -73,7 +73,7 @@ const joinRoom = ({ roomCode, nameToRegister, canvasImageBlob }) => {
   return nicePOST("/join-room", {
     roomCode,
     nameToRegister,
-    canvasImageBlob
+    canvasImageBlob,
   });
 };
 
@@ -81,12 +81,12 @@ const leaveRoom = () => {
   return nicePOST("/leave-room");
 };
 
-const startGame = ({ roomId }) => {
-  return nicePOST(`/start-game/${roomId}`);
+const startGame = () => {
+  return nicePOST(`/start-game`);
 };
 
-const getSubmissions = ({ roomId }) => {
-  return niceGET(`/get-submissions/${roomId}`);
+const getSubmissions = () => {
+  return niceGET(`/get-submissions`);
 };
 
 const submitResponse = ({ clueId, submissionText, isFakeGuess }) => {
@@ -97,8 +97,8 @@ const submitResponse = ({ clueId, submissionText, isFakeGuess }) => {
   });
 };
 
-const getJGameData = ({ sourceGameId }) => {
-  return niceGET(`/get-j-game-data/${sourceGameId}`).then((resp) => {
+const getJGameData = () => {
+  return niceGET(`/get-j-game-data`).then((resp) => {
     const processedResp = dateify({
       obj: resp,
       dateFieldPaths: ["sourceGame.taped_date"],
