@@ -19,35 +19,29 @@ class LandingView extends Component {
   };
 
   state = {
-    typedRoomCode: "",
-    roomCodeError: null,
+    isJoiningRoom: false,
     isLoadingRoom: false,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { typedRoomCode, roomCodeError, isLoadingRoom } = this.state;
+    const { isLoadingRoom, isJoiningRoom } = this.state;
 
-    return (
+    const landingView = (
       <div className="landing-view">
         <div>
-          <h1>Join Room</h1>
-          <input
-            placeholder="ROOM CODE"
-            value={typedRoomCode}
-            onChange={this.onChangeTypedRoomCode}
-          />
-          <button onClick={this.joinRoom}>Join</button>
-          {roomCodeError && (
-            <div className="room-code-error">{roomCodeError}</div>
-          )}
+          <button onClick={this.createRoom}>Create New Room</button>
         </div>
         <div>
-          <h1>Create Room</h1>
-          <button onClick={this.createRoom}>Create</button>
+          <button onClick={this.onClickJoinRoom}>Join Existing Room</button>
         </div>
         {isLoadingRoom && <div>Loading…</div>}
+      </div>
+    );
+    return (
+      <div className="landing-view-container">
+        {isJoiningRoom ? <JoinRoomView /> : landingView}
       </div>
     );
   }
@@ -73,13 +67,91 @@ class LandingView extends Component {
     });
   };
 
+  onClickJoinRoom = () => {
+    this.setState({ isJoiningRoom: true });
+  };
+}
+
+class JoinRoomView extends Component {
+  static propTypes = {
+    /* supplied by withCurrentUser */
+    currentUser: userShape,
+    fetchCurrentUser: PropTypes.func.isRequired,
+    /* supplied by withCurrentRoom */
+    fetchCurrentRoom: PropTypes.func.isRequired,
+  };
+
+  state = {
+    goBack: false,
+    typedRoomCode: "",
+    roomCodeError: null,
+    isLoadingRoom: false,
+    typedPlayerName: "",
+  };
+
+  /* Lifecycle methods. */
+
+  render() {
+    const {
+      typedRoomCode,
+      roomCodeError,
+      isLoadingRoom,
+      typedPlayerName,
+      goBack,
+    } = this.state;
+
+    const joiningView = (
+      <div className="joining-view">
+        <div>
+          <h1>Joining a Room</h1>
+          <h2>ROOM CODE</h2>
+          <input
+            placeholder="ENTER TEXT"
+            value={typedRoomCode}
+            onChange={this.onChangeTypedRoomCode}
+          />
+          {roomCodeError && (
+            <div className="room-code-error">{roomCodeError}</div>
+          )}
+          <h2>PLAYER NAME</h2>
+          <input
+            placeholder="ENTER TEXT"
+            value={typedPlayerName}
+            onChange={this.onChangeTypedPlayerName}
+          />
+        </div>
+        <div>
+          <button onClick={this.joinRoom}> Join Room </button>
+          <button onClick={this.onClickGoBack}>Go back</button>
+        </div>
+        {isLoadingRoom && <div>Loading…</div>}
+      </div>
+    );
+
+    return goBack ? <LandingView /> : joiningView;
+  }
+
+  /* Helpers. */
+
+  onChangeTypedPlayerName = (evt) => {
+    this.setState({ typedPlayerName: evt.target.value.toUpperCase() });
+  };
+
+  onClickGoBack = (evt) => {
+    this.setState({ goBack: true });
+  };
+
+  onChangeTypedRoomCode = (evt) => {
+    this.setState({ typedRoomCode: evt.target.value.toUpperCase() });
+  };
+
   joinRoom = () => {
     const { fetchCurrentUser, fetchCurrentRoom } = this.props;
-    const { typedRoomCode } = this.state;
+    const { typedRoomCode, typedPlayerName } = this.state;
 
     this.setState({ isLoadingRoom: true }, () => {
       api
-        .joinRoom({ roomCode: typedRoomCode })
+        .joinRoom({ roomCode: typedRoomCode, nameToRegister: typedPlayerName })
         .then((res) => {
           if (res.success) {
             return Promise.all([fetchCurrentUser(), fetchCurrentRoom()]);
@@ -96,5 +168,8 @@ class LandingView extends Component {
 
 LandingView = withCurrentUser(LandingView);
 LandingView = withCurrentRoom(LandingView);
+
+JoinRoomView = withCurrentUser(JoinRoomView);
+JoinRoomView = withCurrentRoom(JoinRoomView);
 
 export default LandingView;

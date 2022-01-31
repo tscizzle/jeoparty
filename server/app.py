@@ -42,27 +42,6 @@ def get_current_user():
     return {"user": user}
 
 
-@app.route("/register-name", methods=["POST"])
-def register_name():
-    name_to_register = request.json["nameToRegister"]
-    # Set the current User as having no Room.
-    db = get_db()
-    browser_id = get_browser_id_from_cookie(request)
-
-    user_update_query = f"""
-        UPDATE {JeopartyDb.USER} SET registered_name = ? WHERE browser_id = ?;
-    """
-    db.execute_and_commit(user_update_query, (name_to_register, browser_id))
-    redis_db = get_redis_db()
-
-    room_id = db.get_room_by_browser_id(browser_id)["id"]
-    room_sub_key = get_room_subscription_key(room_id)
-    player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
-    redis_db.publish(room_sub_key, player_joined_msg)
-
-    return {"success": True}
-
-
 @app.route("/get-current-room")
 def get_current_room():
     db = get_db()
@@ -130,16 +109,33 @@ def join_room():
     # If the Room exists, have the current User join it.
     # Otherwise, send back an error response.
     if room_row is not None:
+        browser_id = get_browser_id_from_cookie(request)
+
         user_update_query = f"""
             UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = false
             WHERE browser_id = ?;
         """
         room_id = room_row["id"]
-        browser_id = get_browser_id_from_cookie(request)
         db.execute_and_commit(user_update_query, (room_id, browser_id))
 
         # Tell other clients in the Room that a new Player joined.
         redis_db = get_redis_db()
+        room_sub_key = get_room_subscription_key(room_id)
+        player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
+        redis_db.publish(room_sub_key, player_joined_msg)
+
+        # register the user to this room
+        name_to_register = request.json["nameToRegister"]
+        # Set the current User as having no Room.
+        db = get_db()
+
+        user_update_query = f"""
+            UPDATE {JeopartyDb.USER} SET registered_name = ? WHERE browser_id = ?;
+        """
+        db.execute_and_commit(user_update_query, (name_to_register, browser_id))
+        redis_db = get_redis_db()
+
+        room_id = db.get_room_by_browser_id(browser_id)["id"]
         room_sub_key = get_room_subscription_key(room_id)
         player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
         redis_db.publish(room_sub_key, player_joined_msg)
