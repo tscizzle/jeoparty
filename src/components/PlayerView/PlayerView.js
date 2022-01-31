@@ -54,9 +54,11 @@ class PlayerView extends Component {
   };
 
   registerName = () => {
-    const { fetchCurrentUser, fetchCurrentRoom } = this.props;
 
-    api.registerName().then(() => {
+    const { fetchCurrentUser, fetchCurrentRoom } = this.props;
+    const { typedPlayerName } = this.state;
+
+    api.registerName({nameToRegister: typedPlayerName}).then(() => {
       fetchCurrentUser();
       fetchCurrentRoom();
     });

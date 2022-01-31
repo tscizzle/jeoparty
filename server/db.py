@@ -119,3 +119,15 @@ class JeopartyDb:
         # Return the found or created User.
         user = dict(user_row)
         return user
+
+    def get_room_by_browser_id(self, browser_id):
+        user = self.get_user_by_browser_id(browser_id)
+
+        room_row = None
+        if user["room_id"] is not None:
+            room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
+            room_id = user["room_id"]
+            room_row = self.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
+
+        room = dict(room_row) if room_row is not None else None
+        return room

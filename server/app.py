@@ -52,7 +52,13 @@ def register_name():
     user_update_query = f"""
         UPDATE {JeopartyDb.USER} SET registered_name = ? WHERE browser_id = ?;
     """
-    db.execute_and_commit(user_update_query, (None, name_to_register))
+    db.execute_and_commit(user_update_query, (name_to_register, browser_id))
+    redis_db = get_redis_db()
+
+    room_id = db.get_room_by_browser_id(browser_id)['id']
+    room_sub_key = get_room_subscription_key(room_id)
+    player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
+    redis_db.publish(room_sub_key, player_joined_msg)
 
     return {"success": True}
 
@@ -61,15 +67,7 @@ def register_name():
 def get_current_room():
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
-    user = db.get_user_by_browser_id(browser_id)
-
-    room_row = None
-    if user["room_id"] is not None:
-        room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
-        room_id = user["room_id"]
-        room_row = db.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
-
-    room = dict(room_row) if room_row is not None else None
+    room = db.get_room_by_browser_id(browser_id)
     return {"room": room}
 
 
