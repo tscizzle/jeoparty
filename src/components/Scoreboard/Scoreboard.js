@@ -11,6 +11,42 @@ import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/Scoreboard/Scoreboard.scss";
 
+class ScoreboardRow extends Component {
+  static propTypes = {
+    player: userShape.isRequired,
+    points: PropTypes.number.isRequired,
+    shadowPoints: PropTypes.number.isRequired,
+  };
+
+  render() {
+    const { player, points, shadowPoints } = this.props;
+
+    return (
+      <div className="scoreboard-row">
+        <div className="scoreboard-player-name">
+          {player.registered_name || player.id}
+          <div className="scoreboard-drawn-name">
+            <CanvasDraw
+              hideGridX
+              hideGridY
+              saveData={player.image_blob}
+              disabled
+              canvasWidth={150} // This is the min allowed width
+              canvasHeight={150} // This is the min allowed height
+            />
+          </div>
+        </div>
+        <div className="scoreboard-player-values">
+          <div className="scoreboard-player-points">{points}</div>
+          <div className="scoreboard-player-shadow-points">
+            ({shadowPoints})
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+
 class Scoreboard extends Component {
   static propTypes = {
     /* supplied by withCurrentUser */
@@ -36,35 +72,20 @@ class Scoreboard extends Component {
       return playerWithScores;
     });
 
-    const scoresList = _(playersWithScores)
+    const scoreboardRows = _(playersWithScores)
       .values()
       .orderBy("points")
       .map((p) => (
-        <div className="scoreboard-row" key={p.id}>
-          <div className="scoreboard-player-name">
-            {p.registered_name || p.id}
-            <div className="scoreboard-drawn-name">
-              <CanvasDraw
-                hideGridX
-                hideGridY
-                saveData={p.image_blob}
-                disabled
-                canvasWidth={150} // This is the min allowed width
-                canvasHeight={150} // This is the min allowed height
-              />
-            </div>
-          </div>
-          <div className="scoreboard-player-values">
-            <div className="scoreboard-player-points">{p.points}</div>
-            <div className="scoreboard-player-shadow-points">
-              ({p.shadowPoints})
-            </div>
-          </div>
-        </div>
+        <ScoreboardRow
+          player={p}
+          points={p.points}
+          shadowPoints={p.shadowPoints}
+          key={p.id}
+        />
       ))
       .value();
 
-    return <div className="scoreboard">{scoresList}</div>;
+    return <div className="scoreboard">{scoreboardRows}</div>;
   }
 
   /* Helpers. */
@@ -81,14 +102,21 @@ class Scoreboard extends Component {
     _.each(submissionsForPlayer, (submission) => {
       const clue = clues[submission.clue_id];
       if (clue.money) {
-        if (submission.is_correct === 1) {
-          // Always add to shadow points.
-          shadowPoints += clue.money;
-          // Only add to real points if not a fake guess.
-          if (!submission.is_fake_guess) {
-            points += clue.money;
-          }
+        // Add or subtract the money if correct or incorrect, respectively.
+        let multiplier = 0;
+        if (submission.graded_as === "correct") {
+          multiplier = 1;
+        } else if (submission.graded_as === "incorrect") {
+          multiplier = -1;
         }
+        const scoreChange = clue.money * multiplier;
+
+        // Only affect real points if not a fake guess.
+        if (!submission.is_fake_guess) {
+          points += scoreChange;
+        }
+        // Always affect shadow points.
+        shadowPoints += scoreChange;
       }
     });
     return { points, shadowPoints };

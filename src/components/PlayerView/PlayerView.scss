@@ -10,6 +10,20 @@
   color: $white;
   background-color: $jeopardyBlue;
 
+  .graded-answer {
+    &.points-delta-positive {
+      color: $darkerGray;
+    }
+
+    &.points-delta-negative {
+      color: $red;
+    }
+
+    &.points-delta-neutral {
+      color: $green;
+    }
+  }
+
   .player-view-footer {
     display: flex;
     justify-content: flex-end;

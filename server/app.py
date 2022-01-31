@@ -227,7 +227,7 @@ def submit_response():
 
 @app.route("/grade-response", methods=["POST"])
 def grade_response():
-    # Set is_correct in the Submission table in the db
+    # Set graded_as in the Submission table in the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
     user = db.get_user_by_browser_id(browser_id)
@@ -235,13 +235,13 @@ def grade_response():
     user_id = user["id"]
     room_id = room["id"]
     clue_id = request.json["clueId"]
-    is_correct = request.json["isCorrect"]
+    graded_as = request.json["gradedAs"]
 
     grade_response_query = f"""
-        UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ?
+        UPDATE {JeopartyDb.SUBMISSION} SET graded_as = ?
         WHERE user_id = ? AND clue_id = ? AND room_id = ?;
     """
-    db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))
+    db.execute_and_commit(grade_response_query, (graded_as, user_id, clue_id, room_id))
 
     return {"success": True}
 

@@ -1,13 +1,20 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import classNames from "classnames";
 import _ from "lodash";
 
 import api from "api";
 
-import { userShape, roomShape, submissionShape } from "prop-shapes";
+import {
+  userShape,
+  roomShape,
+  submissionShape,
+  jGameDataShape,
+} from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withSubmissions from "state-management/state-connectors/with-submissions";
+import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/PlayerView/PlayerView.scss";
 
@@ -100,12 +107,116 @@ class SubmittedAnswer extends Component {
   render() {
     const { submission } = this.props;
 
-    const fakeGuessText = submission.is_fake_guess ? " (fake guess)" : "";
+    const { is_fake_guess } = submission;
+
+    const fakeGuessText = is_fake_guess ? " (fake guess)" : "";
     const displayText = `${submission.text}${fakeGuessText}`;
 
     return <div className="submitted-answer">{displayText}</div>;
   }
 }
+
+class GradingForm extends Component {
+  static propTypes = {
+    submission: submissionShape,
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
+    /* supplied by withSubmissions */
+    fetchSubmissions: PropTypes.func.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
+  };
+
+  /* Lifecycle methods. */
+
+  render() {
+    const { submission, currentRoom, jGameData } = this.props;
+
+    const { current_clue_id } = currentRoom;
+
+    const text = submission ? submission.text : "(None)";
+    const { clues } = jGameData;
+    const currentClue = clues[current_clue_id];
+    const { answer } = currentClue;
+
+    return (
+      <div className="grading-form">
+        <div className="answer-comparison">
+          <div className="correct-answer">Correct response: {answer}</div>
+          <div className="player-answer">Your response: {text}</div>
+        </div>
+        <div className="grading-buttons">
+          <button onClick={() => this.giveGrade({ gradedAs: "correct" })}>
+            Correct
+          </button>
+          <button onClick={() => this.giveGrade({ gradedAs: "incorrect" })}>
+            Incorrect
+          </button>
+          <button onClick={() => this.giveGrade({ gradedAs: "blank" })}>
+            Left it blank
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* Helpers. */
+
+  giveGrade = ({ gradedAs }) => {
+    const { currentRoom, fetchSubmissions } = this.props;
+
+    const { current_clue_id } = currentRoom;
+
+    api.gradeResponse({ clueId: current_clue_id, gradedAs }).then(() => {
+      fetchSubmissions();
+    });
+  };
+}
+
+GradingForm = withCurrentRoom(GradingForm);
+GradingForm = withSubmissions(GradingForm);
+GradingForm = withJGameData(GradingForm);
+
+class GradedAnswer extends Component {
+  static propTypes = {
+    submission: submissionShape,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
+  };
+
+  render() {
+    const { submission, jGameData } = this.state;
+
+    const { graded_as, is_fake_guess } = submission;
+    const { clues } = jGameData;
+    const currentClue = clues[submission.clue_id];
+    let { money } = currentClue;
+    money = money || 0;
+
+    let deltaSymbol;
+    let deltaClassname;
+    if (graded_as === "correct") {
+      deltaSymbol = "+";
+      deltaClassname = "points-delta-positive";
+    } else if (graded_as === "incorrect") {
+      deltaSymbol = "-";
+      deltaClassname = "points-delta-negative";
+    } else {
+      deltaSymbol = "+";
+      deltaClassname = "points-delta-neutral";
+    }
+
+    const shadowClause = is_fake_guess ? " (shadow)" : "";
+
+    const displayText = `${deltaSymbol}${money}${shadowClause}`;
+
+    const gradedAnswerClassnames = classNames("graded-answer", deltaClassname);
+
+    return <div className={gradedAnswerClassnames}>{displayText}</div>;
+  }
+}
+
+GradedAnswer = withJGameData(GradedAnswer);
 
 class PlayerView extends Component {
   static propTypes = {
@@ -133,6 +244,7 @@ class PlayerView extends Component {
         .values()
         .find({ clue_id: current_clue_id, user_id });
     }
+    console.log(currentSubmission);
 
     const showAnsweringForm = Boolean(
       current_clue_id &&
@@ -142,6 +254,17 @@ class PlayerView extends Component {
     const showSubmittedAnswer = Boolean(
       current_clue_id && current_clue_stage === "answering" && currentSubmission
     );
+    const showGradingForm = Boolean(
+      current_clue_id &&
+        current_clue_stage === "grading" &&
+        (!currentSubmission || !currentSubmission.graded_as)
+    );
+    const showGradedAnswer = Boolean(
+      current_clue_id &&
+        current_clue_stage === "grading" &&
+        currentSubmission &&
+        currentSubmission.graded_as
+    );
 
     return (
       <div className="player-view">
@@ -149,6 +272,8 @@ class PlayerView extends Component {
         {showSubmittedAnswer && (
           <SubmittedAnswer submission={currentSubmission} />
         )}
+        {showGradingForm && <GradingForm submission={currentSubmission} />}
+        {showGradedAnswer && <GradedAnswer submission={currentSubmission} />}
         <div className="player-view-footer">
           <button onClick={this.leaveRoom}>Leave Room</button>
         </div>

@@ -63,11 +63,12 @@ CREATE TABLE submission (
     clue_id INTEGER NOT NULL,  -- foreign key
     room_id INTEGER NOT NULL,  -- foreign key
     text TEXT,
-    is_correct BOOLEAN DEFAULT NULL,
+    graded_as TEXT DEFAULT NULL,
     is_fake_guess BOOLEAN DEFAULT 0,
     FOREIGN KEY(user_id) REFERENCES user(id),
     FOREIGN KEY(clue_id) REFERENCES clue(id),
     FOREIGN KEY(room_id) REFERENCES room(id),
+    CHECK(graded_as IN ('correct','incorrect','blank'))
     UNIQUE(user_id, clue_id, room_id)
 );
 

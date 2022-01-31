@@ -29,7 +29,7 @@ export const submissionShape = PropTypes.shape({
   clue_id: PropTypes.number.isRequired,
   room_id: PropTypes.number.isRequired,
   text: PropTypes.string,
-  is_correct: PropTypes.oneOf([0, 1]),
+  graded_as: PropTypes.oneOf(["correct", "incorrect", "blank"]),
   is_fake_guess: PropTypes.oneOf([0, 1]).isRequired,
 });
 

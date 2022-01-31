@@ -97,6 +97,13 @@ const submitResponse = ({ clueId, submissionText, isFakeGuess }) => {
   });
 };
 
+const gradeResponse = ({ clueId, gradedAs }) => {
+  return nicePOST("/grade-response", {
+    clueId,
+    gradedAs,
+  });
+};
+
 const getJGameData = () => {
   return niceGET(`/get-j-game-data`).then((resp) => {
     const processedResp = dateify({
@@ -123,6 +130,7 @@ const api = {
   startGame,
   getSubmissions,
   submitResponse,
+  gradeResponse,
   getJGameData,
   subscribeToRoomUpdates,
 };

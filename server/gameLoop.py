@@ -131,7 +131,7 @@ def get_next_clue_id(db, room_id, source_game_id, round_type):
 
 
 def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
-    grading_clause = " AND is_correct IS NOT NULL" if check_grading else ""
+    grading_clause = " AND graded_as IS NOT NULL" if check_grading else ""
     submission_query = f"""
         SELECT user_id FROM {JeopartyDb.SUBMISSION}
         WHERE room_id = ? AND clue_id = ? {grading_clause};

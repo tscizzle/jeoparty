@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import api from "api";
 
-import { userShape, roomShape } from "prop-shapes";
+import { userShape, roomShape, jGameDataShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withPlayers from "state-management/state-connectors/with-players";
@@ -26,17 +26,24 @@ class InRoomView extends Component {
     /* supplied by withSubmissions */
     fetchSubmissions: PropTypes.func.isRequired,
     /* supplied by withJGameData */
+    jGameData: jGameDataShape,
     fetchJGameData: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { currentUser } = this.props;
+    const { currentUser, jGameData } = this.props;
+
+    const showLoading = !jGameData;
+    const showHostView = Boolean(currentUser.is_host && jGameData);
+    const showPlayerView = Boolean(!currentUser.is_host && jGameData);
 
     return (
       <div className="in-game">
-        {currentUser.is_host ? <HostView /> : <PlayerView />}
+        {showLoading && <div>Loading…</div>}
+        {showHostView && <HostView />}
+        {showPlayerView && <PlayerView />}
       </div>
     );
   }
