@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import CanvasDraw from "react-canvas-draw";
 import PropTypes from "prop-types";
 import _ from "lodash";
 
@@ -134,6 +135,8 @@ HostControls = withCurrentRoom(HostControls);
 
 class Scoreboard extends Component {
   static propTypes = {
+    /* supplied by withCurrentUser */
+    currentUser: userShape.isRequired,
     /* supplied by withPlayers */
     players: PropTypes.objectOf(userShape),
     /* supplied by withSubmissions */
@@ -145,8 +148,7 @@ class Scoreboard extends Component {
   /* Lifecycle methods. */
 
   render() {
-    const { players } = this.props;
-
+    const { currentUser, players } = this.props;
     const playersWithScores = _.mapValues(players, (player) => {
       const { points, shadowPoints } = this.getScoresForPlayer({
         userId: player.id,
@@ -162,6 +164,16 @@ class Scoreboard extends Component {
         <div className="scoreboard-row" key={p.id}>
           <div className="scoreboard-player-name">
             {p.registered_name || p.id}
+            <div className="scoreboard-drawn-name">
+              <CanvasDraw
+              hideGridX
+              hideGridY
+              saveData={p.image_blob}
+              disabled
+              canvasWidth= {150} // This is the min allowed width
+              canvasHeight= {150} // This is the min allowed height
+              />
+            </div>
           </div>
           <div className="scoreboard-player-values">
             <div className="scoreboard-player-points">{p.points}</div>
@@ -204,6 +216,7 @@ class Scoreboard extends Component {
   };
 }
 
+Scoreboard = withCurrentUser(Scoreboard);
 Scoreboard = withPlayers(Scoreboard);
 Scoreboard = withSubmissions(Scoreboard);
 Scoreboard = withJGameData(Scoreboard);
