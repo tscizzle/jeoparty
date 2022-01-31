@@ -89,6 +89,14 @@ const getSubmissions = ({ roomId }) => {
   return niceGET(`/get-submissions/${roomId}`);
 };
 
+const submitResponse = ({ clueId, submissionText, isFakeGuess }) => {
+  return nicePOST("/submit-response", {
+    clueId,
+    submissionText,
+    isFakeGuess,
+  });
+};
+
 const getJGameData = ({ sourceGameId }) => {
   return niceGET(`/get-j-game-data/${sourceGameId}`).then((resp) => {
     const processedResp = dateify({
@@ -114,6 +122,7 @@ const api = {
   leaveRoom,
   startGame,
   getSubmissions,
+  submitResponse,
   getJGameData,
   subscribeToRoomUpdates,
 };
