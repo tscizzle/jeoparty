@@ -57,12 +57,6 @@ const getCurrentUser = () => {
   return niceGET("/get-current-user");
 };
 
-const registerName = ({ nameToRegister }) => {
-  return nicePOST("/register-name", {
-    nameToRegister,
-  });
-};
-
 const getCurrentRoom = () => {
   return niceGET("/get-current-room");
 };
@@ -75,9 +69,10 @@ const createRoom = () => {
   return nicePOST("/create-room");
 };
 
-const joinRoom = ({ roomCode }) => {
+const joinRoom = ({ roomCode, nameToRegister }) => {
   return nicePOST("/join-room", {
     roomCode,
+    nameToRegister
   });
 };
 
@@ -111,7 +106,6 @@ const subscribeToRoomUpdates = ({ roomId }) => {
 
 const api = {
   getCurrentUser,
-  registerName,
   getCurrentRoom,
   getPlayers,
   createRoom,
