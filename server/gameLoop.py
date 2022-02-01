@@ -47,7 +47,8 @@ def game_loop(room_id):
 
 def _send_room_update_to_redis(redis_db, room_id):
     room_sub_key = get_room_subscription_key(room_id)
-    redis_db.publish(room_sub_key, json.dumps({"TYPE": "ROOM_UPDATE"}))
+    room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
+    redis_db.publish(room_sub_key, room_update_msg)
 
 
 def get_source_game_id_for_room(db, room_id):

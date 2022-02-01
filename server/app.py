@@ -106,42 +106,30 @@ def create_room():
 def join_room():
     # Check if there is a matching Room in the db.
     db = get_db()
-    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
     room_code = request.json["roomCode"]
+    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
     room_row = db.execute_and_fetch(room_query, (room_code,), do_fetch_one=True)
 
     # If the Room exists, have the current User join it.
     # Otherwise, send back an error response.
     if room_row is not None:
         browser_id = get_browser_id_from_cookie(request)
+        name_to_register = request.json["nameToRegister"]
+        canvas_image_blob = request.json["canvasImageBlob"]
 
         user_update_query = f"""
-            UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = false
+            UPDATE {JeopartyDb.USER}
+            SET room_id = ?, registered_name = ?, image_blob = ?, is_host = false
             WHERE browser_id = ?;
         """
         room_id = room_row["id"]
-        db.execute_and_commit(user_update_query, (room_id, browser_id))
+        db.execute_and_commit(
+            user_update_query,
+            (room_id, name_to_register, canvas_image_blob, browser_id),
+        )
 
         # Tell other clients in the Room that a new Player joined.
         redis_db = get_redis_db()
-        room_sub_key = get_room_subscription_key(room_id)
-        player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
-        redis_db.publish(room_sub_key, player_joined_msg)
-
-        # register the user and the image blob to this room
-        name_to_register = request.json["nameToRegister"]
-        canvasImageBlob = request.json["canvasImageBlob"]
-        # Set the current User as having no Room.
-        db = get_db()
-        user_update_query = f"""
-            UPDATE {JeopartyDb.USER} SET registered_name = ?, image_blob = ? WHERE browser_id = ?;
-        """
-        db.execute_and_commit(
-            user_update_query, (name_to_register, canvasImageBlob, browser_id)
-        )
-        redis_db = get_redis_db()
-
-        room_id = db.get_room_by_browser_id(browser_id)["id"]
         room_sub_key = get_room_subscription_key(room_id)
         player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
         redis_db.publish(room_sub_key, player_joined_msg)
@@ -222,6 +210,12 @@ def submit_response():
         (user_id, clue_id, room_id, submission_text, is_fake_guess),
     )
 
+    # Tell other clients in the same Room that Submissions changed.
+    redis_db = get_redis_db()
+    room_sub_key = get_room_subscription_key(room_id)
+    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
+    redis_db.publish(room_sub_key, submission_update_msg)
+
     return {"success": True}
 
 
@@ -245,6 +239,12 @@ def grade_response():
         DO UPDATE SET graded_as = excluded.graded_as;
     """
     db.execute_and_commit(grade_response_query, (user_id, clue_id, room_id, graded_as))
+
+    # Tell other clients in the same Room that Submissions changed.
+    redis_db = get_redis_db()
+    room_sub_key = get_room_subscription_key(room_id)
+    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
+    redis_db.publish(room_sub_key, submission_update_msg)
 
     return {"success": True}
 
