@@ -185,7 +185,7 @@ class GradedAnswer extends Component {
   };
 
   render() {
-    const { submission, jGameData } = this.state;
+    const { submission, jGameData } = this.props;
 
     const { graded_as, is_fake_guess } = submission;
     const { clues } = jGameData;
@@ -193,22 +193,26 @@ class GradedAnswer extends Component {
     let { money } = currentClue;
     money = money || 0;
 
+    let deltaMoney;
     let deltaSymbol;
     let deltaClassname;
     if (graded_as === "correct") {
+      deltaMoney = money;
       deltaSymbol = "+";
       deltaClassname = "points-delta-positive";
     } else if (graded_as === "incorrect") {
+      deltaMoney = -money;
       deltaSymbol = "-";
       deltaClassname = "points-delta-negative";
     } else {
+      deltaMoney = 0;
       deltaSymbol = "+";
       deltaClassname = "points-delta-neutral";
     }
 
     const shadowClause = is_fake_guess ? " (shadow)" : "";
 
-    const displayText = `${deltaSymbol}${money}${shadowClause}`;
+    const displayText = `${deltaSymbol}${deltaMoney}${shadowClause}`;
 
     const gradedAnswerClassnames = classNames("graded-answer", deltaClassname);
 

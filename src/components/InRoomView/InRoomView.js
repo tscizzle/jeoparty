@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import api from "api";
 
-import { userShape, roomShape, jGameDataShape } from "prop-shapes";
+import { userShape, jGameDataShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withPlayers from "state-management/state-connectors/with-players";

@@ -241,7 +241,8 @@ def grade_response():
     grade_response_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
         (user_id, clue_id, room_id, graded_as) VALUES (?, ?, ?, ?)
-        ON CONFLICT DO UPDATE SET graded_as = excluded.graded_as;
+        ON CONFLICT(user_id, clue_id, room_id)
+        DO UPDATE SET graded_as = excluded.graded_as;
     """
     db.execute_and_commit(grade_response_query, (user_id, clue_id, room_id, graded_as))
 
