@@ -72,7 +72,7 @@ class InRoomView extends Component {
           break;
         }
 
-        case "PLAYER_JOINED_ROOM": {
+        case "PLAYERS_UPDATE": {
           fetchPlayers();
           break;
         }

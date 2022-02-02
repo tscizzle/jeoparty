@@ -131,7 +131,7 @@ def join_room():
         # Tell other clients in the Room that a new Player joined.
         redis_db = get_redis_db()
         room_sub_key = get_room_subscription_key(room_id)
-        player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
+        player_joined_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
         redis_db.publish(room_sub_key, player_joined_msg)
 
         return {"success": True}
@@ -145,11 +145,19 @@ def leave_room():
     db = get_db()
 
     browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     user_update_query = f"""
         UPDATE {JeopartyDb.USER} SET room_id = ? WHERE browser_id = ?;
     """
     db.execute_and_commit(user_update_query, (None, browser_id))
+
+    # Tell other clients in the Room that a new Player joined.
+    redis_db = get_redis_db()
+    room_sub_key = get_room_subscription_key(room_id)
+    player_joined_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
+    redis_db.publish(room_sub_key, player_joined_msg)
 
     return {"success": True}
 
@@ -198,8 +206,8 @@ def submit_response():
     user_id = user["id"]
     room_id = room["id"]
     clue_id = request.json["clueId"]
-    submission_text = request.json.get("submissionText")
-    is_fake_guess = request.json.get("isFakeGuess")
+    submission_text = request.json.get("submissionText", "")
+    is_fake_guess = request.json.get("isFakeGuess", 0)
 
     submission_insert_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}

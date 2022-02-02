@@ -110,7 +110,9 @@ class SubmittedAnswer extends Component {
     const { is_fake_guess } = submission;
 
     const fakeGuessText = is_fake_guess ? " (fake guess)" : "";
-    const displayText = `${submission.text}${fakeGuessText}`;
+    const displayText = submission.text
+      ? `${submission.text}${fakeGuessText}`
+      : "";
 
     return <div className="submitted-answer">{displayText}</div>;
   }
