@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, render_template
 from flask_cors import CORS
 import time
 import json
@@ -16,7 +16,7 @@ from miscHelpers import (
 from db import JeopartyDb
 from gameLoop import game_loop
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../build/", static_folder="../build/static/")
 
 ## TODO: only do this CORS (cross-origin) stuff in dev, not prod (in prod there is no
 ##      cross-origin needed, since page will be loaded from same origin as these api
@@ -31,7 +31,7 @@ CORS(app)
 
 @app.route("/")
 def index():
-    return "TODO: put the build/ directory's index.html here"
+    return render_template("index.html")
 
 
 @app.route("/get-current-user")
@@ -56,12 +56,14 @@ def get_players():
 
     browser_id = get_browser_id_from_cookie(request)
     room = db.get_room_by_browser_id(browser_id)
-    room_id = room["id"]
-
-    players_query = f"""
-        SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
-    """
-    player_rows = db.execute_and_fetch(players_query, (room_id,))
+    if room:
+        room_id = room["id"]
+        players_query = f"""
+            SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
+        """
+        player_rows = db.execute_and_fetch(players_query, (room_id,))
+    else:
+        player_rows = []
 
     players = {player_row["id"]: dict(player_row) for player_row in player_rows}
     return {"players": players}
