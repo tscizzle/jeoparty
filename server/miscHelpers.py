@@ -64,25 +64,26 @@ def load_db_for_source_game():
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (?, ?)",
         (taped_date, jarchive_id),
     )
-    inserted_categories = []
+    inserted_categories = {'single': [], 'double': [], 'final': []}
     for clue_details in random_game_info["clues"]:
         category_text = clue_details["category_info"]["text"]
-        if category_text not in inserted_categories:
-            category_id = db.execute_and_commit(
+        round_type = clue_details["category_info"]["round_type"]
+        if category_text not in inserted_categories[round_type]:
+            db.execute_and_commit(
                 f"INSERT INTO {JeopartyDb.CATEGORY} "
                 f"(source_game_id, col_order_index, text, round_type) VALUES (?, ?, ?, ?)",
                 (
                     source_game_id,
                     clue_details["category_info"]["col_order_index"],
                     category_text,
-                    clue_details["category_info"]["round_type"],
+                    round_type,
                 ),
             )
-            inserted_categories.append(category_text)
+            inserted_categories[round_type].append(category_text)
 
-        category_query = f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ?"
+        category_query = f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ? AND round_type = ?"
         category_row = db.execute_and_fetch(
-            category_query, (category_text,), do_fetch_one=True
+            category_query, (category_text, round_type), do_fetch_one=True
         )
         category_id = dict(category_row)["id"]
 
