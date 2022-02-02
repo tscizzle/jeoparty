@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 
 import api from "api";
 
-import { userShape, roomShape } from "prop-shapes";
+import { userShape, jGameDataShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
 import withPlayers from "state-management/state-connectors/with-players";
@@ -20,24 +20,30 @@ class InRoomView extends Component {
     /* supplied by withCurrentUser */
     currentUser: userShape.isRequired,
     /* supplied by withCurrentRoom */
-    currentRoom: roomShape.isRequired,
     fetchCurrentRoom: PropTypes.func.isRequired,
     /* supplied by withPlayers */
     fetchPlayers: PropTypes.func.isRequired,
     /* supplied by withSubmissions */
     fetchSubmissions: PropTypes.func.isRequired,
     /* supplied by withJGameData */
+    jGameData: jGameDataShape,
     fetchJGameData: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { currentUser } = this.props;
+    const { currentUser, jGameData } = this.props;
+
+    const showLoading = !jGameData;
+    const showHostView = Boolean(currentUser.is_host && jGameData);
+    const showPlayerView = Boolean(!currentUser.is_host && jGameData);
 
     return (
       <div className="in-game">
-        {currentUser.is_host ? <HostView /> : <PlayerView />}
+        {showLoading && <div>Loading…</div>}
+        {showHostView && <HostView />}
+        {showPlayerView && <PlayerView />}
       </div>
     );
   }
@@ -51,11 +57,11 @@ class InRoomView extends Component {
       fetchJGameData,
     } = this.props;
 
-    const { id: room_id, source_game_id } = currentRoom;
+    const { id: room_id } = currentRoom;
 
-    fetchPlayers({ roomId: room_id });
-    fetchSubmissions({ roomId: room_id });
-    fetchJGameData({ sourceGameId: source_game_id });
+    fetchPlayers();
+    fetchSubmissions();
+    fetchJGameData();
 
     const eventSource = api.subscribeToRoomUpdates({ roomId: room_id });
     eventSource.onmessage = (evt) => {
@@ -67,12 +73,12 @@ class InRoomView extends Component {
         }
 
         case "PLAYER_JOINED_ROOM": {
-          fetchPlayers({ roomId: room_id });
+          fetchPlayers();
           break;
         }
 
         case "SUBMISSION_UPDATE": {
-          fetchSubmissions({ roomId: room_id });
+          fetchSubmissions();
           break;
         }
 

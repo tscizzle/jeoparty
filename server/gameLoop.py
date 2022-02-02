@@ -13,10 +13,6 @@ CLUE_PREPARE_TIME = 3
 RESPONSE_TIME_LIMIT = 60
 GRADING_TIME_LIMIT = 20
 
-# FOR TESTING
-RESPONSE_TIME_LIMIT = 1000
-GRADING_TIME_LIMIT = 1
-
 
 #####
 ## Main loop
@@ -51,7 +47,8 @@ def game_loop(room_id):
 
 def _send_room_update_to_redis(redis_db, room_id):
     room_sub_key = get_room_subscription_key(room_id)
-    redis_db.publish(room_sub_key, json.dumps({"TYPE": "ROOM_UPDATE"}))
+    room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
+    redis_db.publish(room_sub_key, room_update_msg)
 
 
 def get_source_game_id_for_room(db, room_id):
@@ -132,7 +129,7 @@ def get_next_clue_id(db, room_id, source_game_id, round_type):
 
 
 def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
-    grading_clause = " AND is_correct IS NOT NULL" if check_grading else ""
+    grading_clause = " AND graded_as IS NOT NULL" if check_grading else ""
     submission_query = f"""
         SELECT user_id FROM {JeopartyDb.SUBMISSION}
         WHERE room_id = ? AND clue_id = ? {grading_clause};
@@ -141,7 +138,7 @@ def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
     submitted_player_ids = set(row["user_id"] for row in submission_rows)
 
     player_query = f"""
-        SELECT id FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 0;
+        SELECT id FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host = 0;
     """
     player_rows = db.execute_and_fetch(player_query, (room_id,))
     all_player_ids = set(row["id"] for row in player_rows)

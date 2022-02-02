@@ -1,0 +1,91 @@
+/* Colors */
+
+$darkest: #111111;
+$darker: #333336;
+$dark: #555558;
+
+$darkerGray: #777790;
+$darkGray: #9999aa;
+$gray: #aaaaad;
+$lightGray: #cccccf;
+
+$light: #dddddf;
+$lighter: #f0f0f2;
+$lightest: #f9f9f9;
+
+$white: #fff;
+
+$darkRed: #bf372f;
+$red: #ef675f;
+$hoverRed: #f0776f;
+$activeRed: #f3877f;
+$lightRed: #ffb7af;
+
+$darkBlue: #444fcc;
+$blue: #747ffc;
+$hoverBlue: #878afc;
+$activeBlue: #9a96fd;
+$lightBlue: #c4cffe;
+$jeopardyBlue: #0309d0;
+
+$darkGreen: #0f7c24;
+$green: #4fcc84;
+$hoverGreen: #5fd087;
+$activeGreen: #6fe090;
+$lightGreen: #affdd4;
+
+$jeopardyYellow: #ddaa55;
+$darkYellow: #d0d049;
+$yellow: #f0e079;
+$hoverYellow: #fff39b;
+$activeYellow: #fff69e;
+$lightYellow: #fffcc9;
+
+$darkOrange: #cc8317;
+$orange: #ffb347;
+$hoverOrange: #ffba4a;
+$activeOrange: #ffc050;
+$lightOrange: #ffe070;
+
+$darkPurple: #883fac;
+$purple: #a44fec;
+$hoverPurple: #b05ff0;
+$activePurple: #b46afa;
+$lightPurple: #e4aaff;
+
+/* Transitions */
+
+@mixin transition($transition...) {
+  -moz-transition: $transition;
+  -o-transition: $transition;
+  -webkit-transition: $transition;
+  transition: $transition;
+}
+
+@mixin transition-property($property...) {
+  -moz-transition-property: $property;
+  -o-transition-property: $property;
+  -webkit-transition-property: $property;
+  transition-property: $property;
+}
+
+@mixin transition-duration($duration...) {
+  -moz-transition-duration: $duration;
+  -o-transition-duration: $duration;
+  -webkit-transition-duration: $duration;
+  transition-duration: $duration;
+}
+
+@mixin transition-timing-function($timing...) {
+  -moz-transition-timing-function: $timing;
+  -o-transition-timing-function: $timing;
+  -webkit-transition-timing-function: $timing;
+  transition-timing-function: $timing;
+}
+
+@mixin transition-delay($delay...) {
+  -moz-transition-delay: $delay;
+  -o-transition-delay: $delay;
+  -webkit-transition-delay: $delay;
+  transition-delay: $delay;
+}

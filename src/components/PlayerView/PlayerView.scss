@@ -1,24 +1,31 @@
+@import "../../vars";
+
 .player-view {
-    display: flex;
-    flex-direction: column;
-    background-color: #0309d0;
-    text-align: center;
-    width: 100vw;
-    height: 100vh;
-    font-family: Arial, Helvetica, sans-serif;
-    justify-content: center;
-    gap: 20px;
-}
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100vw;
+  height: 100vh;
+  padding: 30px;
+  color: $white;
+  background-color: $jeopardyBlue;
 
-.player-name-header{
-    font-size: 1.5em;
-    color: #ddaa55;
-    text-shadow: 6px 6px black;
-}
+  .graded-answer {
+    &.points-delta-positive {
+      color: $darkerGray;
+    }
 
-.player-input{
+    &.points-delta-negative {
+      color: $red;
+    }
+
+    &.points-delta-neutral {
+      color: $green;
+    }
+  }
+
+  .player-view-footer {
     display: flex;
-    align-items: center;
-    flex-direction: column;
-    gap: 10px;
+    justify-content: flex-end;
+  }
 }

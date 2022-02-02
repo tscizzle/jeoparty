@@ -9,7 +9,7 @@ const withSubmissions = (WrappedComponent) => {
   });
 
   const mapDispatchToProps = (dispatch) => ({
-    fetchSubmissions: ({ roomId }) => dispatch(fetchSubmissions({ roomId })),
+    fetchSubmissions: () => dispatch(fetchSubmissions()),
   });
 
   const mergeProps = preserveOwnProps;

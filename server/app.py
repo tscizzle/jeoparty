@@ -50,9 +50,13 @@ def get_current_room():
     return {"room": room}
 
 
-@app.route("/get-players/<room_id>")
-def get_players(room_id):
+@app.route("/get-players")
+def get_players():
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     players_query = f"""
         SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
@@ -102,40 +106,30 @@ def create_room():
 def join_room():
     # Check if there is a matching Room in the db.
     db = get_db()
-    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
     room_code = request.json["roomCode"]
+    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
     room_row = db.execute_and_fetch(room_query, (room_code,), do_fetch_one=True)
 
     # If the Room exists, have the current User join it.
     # Otherwise, send back an error response.
     if room_row is not None:
         browser_id = get_browser_id_from_cookie(request)
+        name_to_register = request.json["nameToRegister"]
+        canvas_image_blob = request.json["canvasImageBlob"]
 
         user_update_query = f"""
-            UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = false
+            UPDATE {JeopartyDb.USER}
+            SET room_id = ?, registered_name = ?, image_blob = ?, is_host = false
             WHERE browser_id = ?;
         """
         room_id = room_row["id"]
-        db.execute_and_commit(user_update_query, (room_id, browser_id))
+        db.execute_and_commit(
+            user_update_query,
+            (room_id, name_to_register, canvas_image_blob, browser_id),
+        )
 
         # Tell other clients in the Room that a new Player joined.
         redis_db = get_redis_db()
-        room_sub_key = get_room_subscription_key(room_id)
-        player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
-        redis_db.publish(room_sub_key, player_joined_msg)
-
-        # register the user and the image blob to this room
-        name_to_register = request.json["nameToRegister"]
-        canvasImageBlob = request.json["canvasImageBlob"]
-        # Set the current User as having no Room.
-        db = get_db()
-        user_update_query = f"""
-            UPDATE {JeopartyDb.USER} SET registered_name = ?, image_blob = ? WHERE browser_id = ?;
-        """
-        db.execute_and_commit(user_update_query, (name_to_register, canvasImageBlob, browser_id))
-        redis_db = get_redis_db()
-
-        room_id = db.get_room_by_browser_id(browser_id)["id"]
         room_sub_key = get_room_subscription_key(room_id)
         player_joined_msg = json.dumps({"TYPE": "PLAYER_JOINED_ROOM"})
         redis_db.publish(room_sub_key, player_joined_msg)
@@ -149,6 +143,7 @@ def join_room():
 def leave_room():
     # Set the current User as having no Room.
     db = get_db()
+
     browser_id = get_browser_id_from_cookie(request)
 
     user_update_query = f"""
@@ -159,10 +154,14 @@ def leave_room():
     return {"success": True}
 
 
-@app.route("/start-game/<room_id>", methods=["POST"])
-def start_game(room_id):
+@app.route("/start-game", methods=["POST"])
+def start_game():
     # Set the current Room as having started.
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE id = ?;
@@ -172,9 +171,13 @@ def start_game(room_id):
     return {"success": True}
 
 
-@app.route("/get-submissions/<room_id>")
-def get_submissions(room_id):
+@app.route("/get-submissions")
+def get_submissions():
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    room_id = room["id"]
 
     submission_query = f"""SELECT * FROM {JeopartyDb.SUBMISSION} WHERE room_id = ?;"""
     submission_rows = db.execute_and_fetch(submission_query, (room_id,))
@@ -190,47 +193,72 @@ def submit_response():
     # Add the Submission to the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
-    user_id = db.get_user_by_browser_id(browser_id)
-    room_id = db.get_room_by_browser_id(browser_id)
+    user = db.get_user_by_browser_id(browser_id)
+    room = db.get_room_by_browser_id(browser_id)
+    user_id = user["id"]
+    room_id = room["id"]
     clue_id = request.json["clueId"]
     submission_text = request.json["submissionText"]
     is_fake_guess = request.json["isFakeGuess"]
 
     submission_insert_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
-        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?);
+        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?, ?, ?, ?);
     """
     db.execute_and_commit(
         submission_insert_query,
         (user_id, clue_id, room_id, submission_text, is_fake_guess),
     )
 
+    # Tell other clients in the same Room that Submissions changed.
+    redis_db = get_redis_db()
+    room_sub_key = get_room_subscription_key(room_id)
+    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
+    redis_db.publish(room_sub_key, submission_update_msg)
+
     return {"success": True}
 
 
 @app.route("/grade-response", methods=["POST"])
 def grade_response():
-    # Set is_correct in the Submission table in the db
+    # Set graded_as in the Submission table in the db
     db = get_db()
     browser_id = get_browser_id_from_cookie(request)
-    user_id = db.get_user_by_browser_id(browser_id)
+    user = db.get_user_by_browser_id(browser_id)
+    room = db.get_room_by_browser_id(browser_id)
+    user_id = user["id"]
+    room_id = room["id"]
     clue_id = request.json["clueId"]
-    room_id = request.json["roomId"]
-    is_correct = request.json["isCorrect"]
+    graded_as = request.json["gradedAs"]
 
+    # This combo insert-update is how SQLite does upserts.
     grade_response_query = f"""
-        UPDATE {JeopartyDb.SUBMISSION} SET is_correct = ? 
-        WHERE user_id = ? AND clue_id = ? AND room_id = ?;
+        INSERT INTO {JeopartyDb.SUBMISSION}
+        (user_id, clue_id, room_id, graded_as) VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id, clue_id, room_id)
+        DO UPDATE SET graded_as = excluded.graded_as;
     """
-    db.execute_and_commit(grade_response_query, (is_correct, user_id, clue_id, room_id))
+    db.execute_and_commit(grade_response_query, (user_id, clue_id, room_id, graded_as))
+
+    # Tell other clients in the same Room that Submissions changed.
+    redis_db = get_redis_db()
+    room_sub_key = get_room_subscription_key(room_id)
+    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
+    redis_db.publish(room_sub_key, submission_update_msg)
 
     return {"success": True}
 
 
-@app.route("/get-j-game-data/<source_game_id>")
-def get_j_game_data(source_game_id):
+@app.route("/get-j-game-data")
+def get_j_game_data():
     # For a given SourceGame, get all the data (SourceGame, Categories, Clues).
+
     db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    source_game_id = room["source_game_id"]
+
     source_game_query = f"SELECT * FROM {JeopartyDb.SOURCE_GAME} WHERE id = ?;"
     category_query = f"SELECT * FROM {JeopartyDb.CATEGORY} WHERE source_game_id = ?;"
     clue_query = f"SELECT * FROM {JeopartyDb.CLUE} WHERE source_game_id = ?;"
