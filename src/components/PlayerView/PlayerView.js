@@ -190,31 +190,27 @@ class GradedAnswer extends Component {
     const { graded_as, is_fake_guess } = submission;
     const { clues } = jGameData;
     const currentClue = clues[submission.clue_id];
-    let { money } = currentClue;
-    money = money || 0;
+    const money = currentClue.money || 0;
 
-    let deltaMoney;
-    let deltaSymbol;
-    let deltaClassname;
+    let moneyChangeStr;
+    let moneyChangeClassname;
     if (graded_as === "correct") {
-      deltaMoney = money;
-      deltaSymbol = "+";
-      deltaClassname = "points-delta-positive";
+      moneyChangeStr = `+${money}`;
+      moneyChangeClassname = "points-change-positive";
     } else if (graded_as === "incorrect") {
-      deltaMoney = -money;
-      deltaSymbol = "-";
-      deltaClassname = "points-delta-negative";
+      moneyChangeStr = `${-money}`;
+      moneyChangeClassname = "points-change-negative";
     } else {
-      deltaMoney = 0;
-      deltaSymbol = "+";
-      deltaClassname = "points-delta-neutral";
+      moneyChangeStr = `+0`;
+      moneyChangeClassname = "points-change-neutral";
     }
-
     const shadowClause = is_fake_guess ? " (shadow)" : "";
+    const displayText = `${moneyChangeStr}${shadowClause}`;
 
-    const displayText = `${deltaSymbol}${deltaMoney}${shadowClause}`;
-
-    const gradedAnswerClassnames = classNames("graded-answer", deltaClassname);
+    const gradedAnswerClassnames = classNames(
+      "graded-answer",
+      moneyChangeClassname
+    );
 
     return <div className={gradedAnswerClassnames}>{displayText}</div>;
   }

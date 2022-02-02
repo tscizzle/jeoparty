@@ -11,15 +11,15 @@
   background-color: $jeopardyBlue;
 
   .graded-answer {
-    &.points-delta-positive {
+    &.points-change-positive {
       color: $darkerGray;
     }
 
-    &.points-delta-negative {
+    &.points-change-negative {
       color: $red;
     }
 
-    &.points-delta-neutral {
+    &.points-change-neutral {
       color: $green;
     }
   }

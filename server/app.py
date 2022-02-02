@@ -198,8 +198,8 @@ def submit_response():
     user_id = user["id"]
     room_id = room["id"]
     clue_id = request.json["clueId"]
-    submission_text = request.json["submissionText"]
-    is_fake_guess = request.json["isFakeGuess"]
+    submission_text = request.json.get("submissionText")
+    is_fake_guess = request.json.get("isFakeGuess")
 
     submission_insert_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
