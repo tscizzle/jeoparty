@@ -1,16 +1,14 @@
-import redis
 import json
 import time
 import traceback
 
-from miscHelpers import get_room_subscription_key
-from db import JeopartyDb
+from db import JeopartyDb, JeopartyRedis
 
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
 CLUE_PREPARE_TIME = 3
-RESPONSE_TIME_LIMIT = 60
-GRADING_TIME_LIMIT = 20
+RESPONSE_TIME_LIMIT = 50
+GRADING_TIME_LIMIT = 15
 
 
 #####
@@ -23,7 +21,7 @@ def game_loop(room_id):
 
         db = JeopartyDb()
 
-        redis_db = redis.Redis()
+        redis_db = JeopartyRedis()
 
         wait_for_game_to_be_started(db, room_id)
 
@@ -31,7 +29,7 @@ def game_loop(room_id):
 
         for round_type in ["single", "double", "final"]:
             while next_clue_id := get_next_clue_id(
-                    db, room_id, source_game_id, round_type
+                db, room_id, source_game_id, round_type
             ):
                 run_next_clue(next_clue_id, db, room_id, redis_db)
 
@@ -42,6 +40,7 @@ def game_loop(room_id):
 #####
 ## Helpers
 #####
+
 
 def get_source_game_id_for_room(db, room_id):
     source_game_query = f"""
@@ -164,8 +163,9 @@ def wait_for_players_to_submit(db, room_id, clue_id, redis_db):
         current_time = time.time()
         response_timeout = current_time - start_time > RESPONSE_TIME_LIMIT
 
-        _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
-                                    RESPONSE_TIME_LIMIT)
+        _send_timer_update_to_redis(
+            redis_db, room_id, start_time, current_time, RESPONSE_TIME_LIMIT
+        )
 
         time.sleep(WHILE_LOOP_SLEEP)
 
@@ -181,26 +181,29 @@ def wait_for_players_to_grade(db, room_id, clue_id, redis_db):
         current_time = time.time()
         response_timeout = current_time - start_time > GRADING_TIME_LIMIT
 
-        _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
-                                    GRADING_TIME_LIMIT)
+        _send_timer_update_to_redis(
+            redis_db, room_id, start_time, current_time, GRADING_TIME_LIMIT
+        )
 
         time.sleep(WHILE_LOOP_SLEEP)
 
 
 def _send_room_update_to_redis(redis_db, room_id):
-    room_sub_key = get_room_subscription_key(room_id)
     room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
-    redis_db.publish(room_sub_key, room_update_msg)
+    redis_db.publish_to_room(room_id, room_update_msg)
 
 
-def _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
-                                total_time):
-    room_sub_key = get_room_subscription_key(room_id)
-    room_update_msg = json.dumps(
-        {"TYPE": "TIMER_UPDATE",
-         "TIMER_INFO": {
-             "START_TIME": start_time,
-             "CURRENT_TIME": current_time,
-             "TOTAL_TIME": total_time
-         }})
-    redis_db.publish(room_sub_key, room_update_msg)
+def _send_timer_update_to_redis(
+    redis_db, room_id, start_time, current_time, total_time
+):
+    timer_update_msg = json.dumps(
+        {
+            "TYPE": "TIMER_UPDATE",
+            "TIMER_INFO": {
+                "START_TIME": start_time,
+                "CURRENT_TIME": current_time,
+                "TOTAL_TIME": total_time,
+            },
+        }
+    )
+    redis_db.publish_to_room(room_id, timer_update_msg)

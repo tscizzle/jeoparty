@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+/.venv
 
 # testing
 /coverage
@@ -26,4 +27,4 @@ yarn-error.log*
 dump.rdb
 
 # VS Code
-.vscode/
+/.vscode

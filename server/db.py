@@ -1,12 +1,12 @@
 import os
 import sqlite3
-
-
-DB_PATH = "jeoparty.db"
+import redis
 
 
 class JeopartyDb:
     """Object that represents a connection to our SQLite db."""
+
+    SQLITE_DB_PATH = "jeoparty.db"
 
     # Table names
     USER = "user"
@@ -18,7 +18,7 @@ class JeopartyDb:
     SUBMISSION = "submission"
 
     def __init__(self):
-        self.conn = sqlite3.connect(DB_PATH)
+        self.conn = sqlite3.connect(self.SQLITE_DB_PATH)
         self.conn.row_factory = sqlite3.Row
 
     #####
@@ -85,7 +85,7 @@ class JeopartyDb:
         """Delete the entire db. For SQLite that is just deleting the .db file."""
         print("Clearing database...")
         try:
-            os.remove(DB_PATH)
+            os.remove(JeopartyDb.SQLITE_DB_PATH)
             print("Cleared database.")
         except OSError:
             pass
@@ -131,3 +131,25 @@ class JeopartyDb:
 
         room = dict(room_row) if room_row is not None else None
         return room
+
+
+class JeopartyRedis:
+    """Object that represents a connection to our Redis instance."""
+
+    def __init__(self):
+        url = os.environ.get("REDIS_URL", "redis://localhost:6379")
+        self.conn = redis.from_url(url)
+
+    @staticmethod
+    def get_room_subscription_key(room_id):
+        return f"room-{room_id}"
+
+    def publish_to_room(self, room_id, msg):
+        room_sub_key = self.get_room_subscription_key(room_id)
+        self.conn.publish(room_sub_key, msg)
+
+    def subscribe_to_room(self, room_id):
+        room_sub_key = self.get_room_subscription_key(room_id)
+        room_pubsub = self.conn.pubsub()
+        room_pubsub.subscribe(room_sub_key)
+        return room_pubsub

@@ -1,10 +1,9 @@
 from flask import g
 from flask_executor import Executor
-import redis
 import string
 import random
 
-from db import JeopartyDb
+from db import JeopartyDb, JeopartyRedis
 
 
 def get_db():
@@ -17,7 +16,7 @@ def get_db():
 def get_redis_db():
     redis_db = getattr(g, "_redis_db", None)
     if redis_db is None:
-        redis_db = g._redis_db = redis.Redis()
+        redis_db = g._redis_db = JeopartyRedis()
     return redis_db
 
 
@@ -40,10 +39,6 @@ def get_browser_id_from_cookie(req):
     return browser_id
 
 
-def get_room_subscription_key(room_id):
-    return f"room-{room_id}"
-
-
 def generate_room_code():
     return "".join(random.choice(string.ascii_uppercase) for _ in range(4))
 
@@ -64,7 +59,7 @@ def load_db_for_source_game():
         f"INSERT INTO {JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (?, ?)",
         (taped_date, jarchive_id),
     )
-    inserted_categories = {'single': [], 'double': [], 'final': []}
+    inserted_categories = {"single": [], "double": [], "final": []}
     for clue_details in random_game_info["clues"]:
         category_text = clue_details["category_info"]["text"]
         round_type = clue_details["category_info"]["round_type"]
@@ -81,7 +76,9 @@ def load_db_for_source_game():
             )
             inserted_categories[round_type].append(category_text)
 
-        category_query = f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ? AND round_type = ?"
+        category_query = (
+            f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ? AND round_type = ?"
+        )
         category_row = db.execute_and_fetch(
             category_query, (category_text, round_type), do_fetch_one=True
         )
