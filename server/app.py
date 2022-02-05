@@ -15,6 +15,8 @@ from miscHelpers import (
 from db import JeopartyDb
 from gameLoop import game_loop
 
+## TODO: only use the /build folder in prod. In dev we don't serve the web page, just
+##     API calls, since the react dev server serves the web page.
 app = Flask(__name__, template_folder="../build/", static_folder="../build/static/")
 
 ## TODO: only do this CORS (cross-origin) stuff in dev, not prod (in prod there is no
@@ -28,6 +30,8 @@ CORS(app)
 #####
 
 
+## TODO: only serve the "/" route in prod. In dev we don't serve the web page, just API
+##     calls, since the react dev server serves the web page.
 @app.route("/")
 def index():
     return render_template("index.html")
