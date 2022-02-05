@@ -53,13 +53,11 @@ class Clue extends Component {
     const showThisClueText =
       this_clue_id === current_clue_id && current_clue_stage === "answering";
     let timerPercent;
-    console.log("about to calc timerPercent")
+    console.log("about to calc timerPercent");
     if (timerStartTime) {
-      console.log("In timerPercent if statement")
+      console.log("In timerPercent if statement");
       timerPercent =
-        ((timerCurrentTime - timerStartTime) /
-          timerTotalTime) *
-        100;
+        ((timerCurrentTime - timerStartTime) / timerTotalTime) * 100;
     }
     return (
       <div className="clue">
@@ -67,7 +65,14 @@ class Clue extends Component {
         {showThisClueText && (
           <div className="clue-text">
             {clueText}
-            <ProgressBar className="clue-progress" completed={timerPercent} customLabel=" " />
+            <ProgressBar
+              className="clue-progress"
+              completed={timerPercent}
+              customLabel=" "
+              bgColor="#ddaa55"
+              height="80px"
+              width="700px"
+            />
           </div>
         )}
       </div>
