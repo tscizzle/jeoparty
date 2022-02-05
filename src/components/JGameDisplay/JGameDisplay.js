@@ -17,6 +17,69 @@ import withJGameData from "state-management/state-connectors/with-j-game-data";
 import "components/JGameDisplay/JGameDisplay.scss";
 import withTimer from "state-management/state-connectors/with-timer";
 
+class SubmissionSummary extends Component {
+  static propTypes = {
+    // clue: clueShape.isRequired,
+    /* supplied by withCurrentRoom */
+    currentRoom: roomShape.isRequired,
+    /* supplied by withJGameData */
+    jGameData: jGameDataShape.isRequired,
+    // /* supplied by withTimer */
+    // updateTimer: PropTypes.func.isRequired,
+  };
+
+  /* Lifecycle methods. */
+
+  render() {
+    const {
+      currentRoom,
+      jGameData,
+      timerStartTime,
+      timerCurrentTime,
+      timerTotalTime,
+    } = this.props;
+
+    const { current_clue_id, current_clue_stage } = currentRoom;
+    const { clues } = jGameData;
+
+    const current_clue_obj = clues[current_clue_id];
+
+    const showSubmissionSummary = current_clue_stage === "grading";
+    let timerPercent = 0;
+    if (timerStartTime) {
+      timerPercent =
+        ((timerCurrentTime - timerStartTime) / timerTotalTime) * 100;
+    }
+    return (
+      showSubmissionSummary && (
+        <div className="submissionSummary">
+          {current_clue_obj && showSubmissionSummary && (
+            <div className="money-text">${current_clue_obj.money}</div>
+          )}
+          {current_clue_obj && showSubmissionSummary && (
+            <div className="clue-text">
+              {current_clue_obj.clue}
+              {current_clue_obj.answer}
+              <ProgressBar
+                className="clue-progress"
+                completed={timerPercent}
+                customLabel=" "
+                bgColor="#ddaa55"
+                height="80px"
+                width="700px"
+              />
+            </div>
+          )}
+        </div>
+      )
+    );
+  }
+}
+
+SubmissionSummary = withCurrentRoom(SubmissionSummary);
+SubmissionSummary = withJGameData(SubmissionSummary);
+SubmissionSummary = withTimer(SubmissionSummary);
+
 class Clue extends Component {
   static propTypes = {
     clue: clueShape.isRequired,
@@ -193,6 +256,7 @@ class JGameDisplay extends Component {
     return (
       <div className="j-game-display">
         <h1 hidden>{tapedDate}</h1>
+        <SubmissionSummary />
         <JRound roundType={currentRound} />
       </div>
     );

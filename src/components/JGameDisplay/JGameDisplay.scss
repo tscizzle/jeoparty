@@ -6,6 +6,18 @@
   align-items: center;
   font-family: Arial, Helvetica, sans-serif;
 
+  .submissionSummary {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    font-size: 5em;
+    font-weight: bold;
+    background-color: $jeopardyBlue;
+    z-index: 10;
+  }
+
   .j-round {
     .j-round-header {
       text-align: center;
