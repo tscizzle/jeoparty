@@ -9,6 +9,7 @@ import withCurrentRoom from "state-management/state-connectors/with-current-room
 import withPlayers from "state-management/state-connectors/with-players";
 import withSubmissions from "state-management/state-connectors/with-submissions";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
+import withTimer from "state-management/state-connectors/with-timer";
 
 import HostView from "components/HostView/HostView";
 import PlayerView from "components/PlayerView/PlayerView";
@@ -28,6 +29,8 @@ class InRoomView extends Component {
     /* supplied by withJGameData */
     jGameData: jGameDataShape,
     fetchJGameData: PropTypes.func.isRequired,
+    /* supplied by withTimer */
+    updateTimer: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
@@ -55,6 +58,7 @@ class InRoomView extends Component {
       fetchPlayers,
       fetchSubmissions,
       fetchJGameData,
+      updateTimer
     } = this.props;
 
     const { id: room_id } = currentRoom;
@@ -82,6 +86,15 @@ class InRoomView extends Component {
           break;
         }
 
+        case "TIMER_UPDATE": {
+          updateTimer({ 
+            startTime: msg.TIMER_INFO.START_TIME, 
+            currentTime: msg.TIMER_INFO.CURRENT_TIME, 
+            totalTime: msg.TIMER_INFO.TOTAL_TIME
+          });
+          break;
+        }
+
         default: {
           break;
         }
@@ -95,5 +108,6 @@ InRoomView = withCurrentRoom(InRoomView);
 InRoomView = withPlayers(InRoomView);
 InRoomView = withSubmissions(InRoomView);
 InRoomView = withJGameData(InRoomView);
+InRoomView = withTimer(InRoomView);
 
 export default InRoomView;

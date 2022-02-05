@@ -7,6 +7,7 @@ import {
   FETCH_SUBMISSIONS_SUCCESS,
   FETCH_J_GAME_DATA_SUCCESS,
   FETCH_J_GAME_DATA_FAILURE,
+  UPDATE_TIMER,
 } from "state-management/actions";
 import { mapItemsToIdx, getClueOrder } from "misc-helpers";
 
@@ -18,6 +19,9 @@ const getInitialState = () => ({
   players: null,
   submissions: null,
   jGameData: null,
+  timerStartTime: null,
+  timerCurrentTime: null,
+  timerTotalTime: null
 });
 
 const mainReducer = (state = getInitialState(), action) => {
@@ -107,6 +111,16 @@ const mainReducer = (state = getInitialState(), action) => {
         ...state,
         currentRoom: null,
         hasAttemptedFetchCurrentRoom: true,
+      };
+      break;
+    }
+
+    case UPDATE_TIMER: {
+      newState = {
+        ...state,
+        timerStartTime: action.startTime,
+        timerCurrentTime: action.currentTime,
+        timerTotalTime: action.totalTime,
       };
       break;
     }

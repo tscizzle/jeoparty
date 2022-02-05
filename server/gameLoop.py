@@ -6,7 +6,6 @@ import traceback
 from miscHelpers import get_room_subscription_key
 from db import JeopartyDb
 
-
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
 CLUE_PREPARE_TIME = 3
@@ -32,7 +31,7 @@ def game_loop(room_id):
 
         for round_type in ["single", "double", "final"]:
             while next_clue_id := get_next_clue_id(
-                db, room_id, source_game_id, round_type
+                    db, room_id, source_game_id, round_type
             ):
                 run_next_clue(next_clue_id, db, room_id, redis_db)
 
@@ -43,13 +42,6 @@ def game_loop(room_id):
 #####
 ## Helpers
 #####
-
-
-def _send_room_update_to_redis(redis_db, room_id):
-    room_sub_key = get_room_subscription_key(room_id)
-    room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
-    redis_db.publish(room_sub_key, room_update_msg)
-
 
 def get_source_game_id_for_room(db, room_id):
     source_game_query = f"""
@@ -83,7 +75,7 @@ def run_next_clue(clue_id, db, room_id, redis_db):
     db.execute_and_commit(room_update_query, (clue_id, room_id))
     _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_submit(db, room_id, clue_id)
+    wait_for_players_to_submit(db, room_id, clue_id, redis_db)
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'grading' WHERE id = ?;
@@ -91,7 +83,7 @@ def run_next_clue(clue_id, db, room_id, redis_db):
     db.execute_and_commit(room_update_query, (room_id,))
     _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_grade(db, room_id, clue_id)
+    wait_for_players_to_grade(db, room_id, clue_id, redis_db)
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'finished' WHERE id = ?;
@@ -163,17 +155,22 @@ def wait_for_game_to_be_started(db, room_id):
         time.sleep(WHILE_LOOP_SLEEP)
 
 
-def wait_for_players_to_submit(db, room_id, clue_id):
+def wait_for_players_to_submit(db, room_id, clue_id, redis_db):
     all_players_submitted = False
     response_timeout = False
     start_time = time.time()
     while not all_players_submitted and not response_timeout:
         all_players_submitted = get_did_all_players_submit(db, room_id, clue_id)
-        response_timeout = time.time() - start_time > RESPONSE_TIME_LIMIT
+        current_time = time.time()
+        response_timeout = current_time - start_time > RESPONSE_TIME_LIMIT
+
+        _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
+                                    RESPONSE_TIME_LIMIT)
+
         time.sleep(WHILE_LOOP_SLEEP)
 
 
-def wait_for_players_to_grade(db, room_id, clue_id):
+def wait_for_players_to_grade(db, room_id, clue_id, redis_db):
     all_players_submitted = False
     response_timeout = False
     start_time = time.time()
@@ -181,5 +178,29 @@ def wait_for_players_to_grade(db, room_id, clue_id):
         all_players_submitted = get_did_all_players_submit(
             db, room_id, clue_id, check_grading=True
         )
-        response_timeout = time.time() - start_time > GRADING_TIME_LIMIT
+        current_time = time.time()
+        response_timeout = current_time - start_time > GRADING_TIME_LIMIT
+
+        _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
+                                    GRADING_TIME_LIMIT)
+
         time.sleep(WHILE_LOOP_SLEEP)
+
+
+def _send_room_update_to_redis(redis_db, room_id):
+    room_sub_key = get_room_subscription_key(room_id)
+    room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
+    redis_db.publish(room_sub_key, room_update_msg)
+
+
+def _send_timer_update_to_redis(room_id, redis_db, start_time, current_time,
+                                total_time):
+    room_sub_key = get_room_subscription_key(room_id)
+    room_update_msg = json.dumps(
+        {"TYPE": "TIMER_UPDATE",
+         "TIMER_INFO": {
+             "START_TIME": start_time,
+             "CURRENT_TIME": current_time,
+             "TOTAL_TIME": total_time
+         }})
+    redis_db.publish(room_sub_key, room_update_msg)

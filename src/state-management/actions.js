@@ -17,6 +17,8 @@ export const FETCH_SUBMISSIONS_FAILURE = "FETCH_SUBMISSIONS_FAILURE";
 export const FETCH_J_GAME_DATA_SUCCESS = "FETCH_J_GAME_DATA_SUCCESS";
 export const FETCH_J_GAME_DATA_FAILURE = "FETCH_J_GAME_DATA_FAILURE";
 
+export const UPDATE_TIMER = "UPDATE_TIMER";
+
 /* Action Creators */
 
 const fetchCurrentUserSuccess = ({ user }) => ({
@@ -128,3 +130,8 @@ export const fetchJGameData = () => {
       });
   };
 };
+
+export const updateTimer = ({ startTime, currentTime, totalTime }) => ({
+  type: UPDATE_TIMER,
+  startTime, currentTime, totalTime,
+});

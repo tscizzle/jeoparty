@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import moment from "moment-timezone";
 import _ from "lodash";
+import ProgressBar from "@ramonak/react-progress-bar";
 
 import {
   roomShape,
@@ -14,6 +15,7 @@ import withCurrentRoom from "state-management/state-connectors/with-current-room
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/JGameDisplay/JGameDisplay.scss";
+import withTimer from "state-management/state-connectors/with-timer";
 
 class Clue extends Component {
   static propTypes = {
@@ -22,12 +24,21 @@ class Clue extends Component {
     currentRoom: roomShape.isRequired,
     /* supplied by withJGameData */
     jGameData: jGameDataShape.isRequired,
+    /* supplied by withTimer */
+    updateTimer: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { clue, currentRoom, jGameData } = this.props;
+    const {
+      clue,
+      currentRoom,
+      jGameData,
+      timerStartTime,
+      timerCurrentTime,
+      timerTotalTime,
+    } = this.props;
 
     const { id: this_clue_id, clue: clueText, money } = clue;
     const { current_clue_id, current_clue_stage } = currentRoom;
@@ -41,11 +52,24 @@ class Clue extends Component {
     const showMoney = thisClueIdx > currentClueIdx;
     const showThisClueText =
       this_clue_id === current_clue_id && current_clue_stage === "answering";
-
+    let timerPercent;
+    console.log("about to calc timerPercent")
+    if (timerStartTime) {
+      console.log("In timerPercent if statement")
+      timerPercent =
+        ((timerCurrentTime - timerStartTime) /
+          timerTotalTime) *
+        100;
+    }
     return (
       <div className="clue">
         {showMoney && <div className="money-text">${money}</div>}
-        {showThisClueText && <div className="clue-text">{clueText}</div>}
+        {showThisClueText && (
+          <div className="clue-text">
+            {clueText}
+            <ProgressBar className="clue-progress" completed={timerPercent} customLabel=" " />
+          </div>
+        )}
       </div>
     );
   }
@@ -53,6 +77,7 @@ class Clue extends Component {
 
 Clue = withCurrentRoom(Clue);
 Clue = withJGameData(Clue);
+Clue = withTimer(Clue);
 
 class Category extends Component {
   static propTypes = {
