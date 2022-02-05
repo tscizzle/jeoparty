@@ -52,10 +52,8 @@ class Clue extends Component {
     const showMoney = thisClueIdx > currentClueIdx;
     const showThisClueText =
       this_clue_id === current_clue_id && current_clue_stage === "answering";
-    let timerPercent;
-    console.log("about to calc timerPercent");
+    let timerPercent = 0;
     if (timerStartTime) {
-      console.log("In timerPercent if statement");
       timerPercent =
         ((timerCurrentTime - timerStartTime) / timerTotalTime) * 100;
     }
