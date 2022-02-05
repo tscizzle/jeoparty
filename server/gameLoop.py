@@ -1,10 +1,8 @@
-import redis
 import json
 import time
 import traceback
 
-from miscHelpers import get_room_subscription_key
-from db import JeopartyDb
+from db import JeopartyDb, JeopartyRedis
 
 
 WHILE_LOOP_SLEEP = 1
@@ -24,7 +22,7 @@ def game_loop(room_id):
 
         db = JeopartyDb()
 
-        redis_db = redis.Redis()
+        redis_db = JeopartyRedis()
 
         wait_for_game_to_be_started(db, room_id)
 
@@ -46,9 +44,8 @@ def game_loop(room_id):
 
 
 def _send_room_update_to_redis(redis_db, room_id):
-    room_sub_key = get_room_subscription_key(room_id)
     room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
-    redis_db.publish(room_sub_key, room_update_msg)
+    redis_db.publish_to_room(room_id, room_update_msg)
 
 
 def get_source_game_id_for_room(db, room_id):

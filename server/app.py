@@ -8,7 +8,6 @@ from miscHelpers import (
     get_redis_db,
     get_executor,
     get_browser_id_from_cookie,
-    get_room_subscription_key,
     generate_room_code,
     format_msg_for_server_side_event,
     load_db_for_source_game,
@@ -132,9 +131,8 @@ def join_room():
 
         # Tell other clients in the Room that a new Player joined.
         redis_db = get_redis_db()
-        room_sub_key = get_room_subscription_key(room_id)
         player_joined_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
-        redis_db.publish(room_sub_key, player_joined_msg)
+        redis_db.publish_to_room(room_id, player_joined_msg)
 
         return {"success": True}
     else:
@@ -155,11 +153,10 @@ def leave_room():
     """
     db.execute_and_commit(user_update_query, (None, browser_id))
 
-    # Tell other clients in the Room that a new Player joined.
+    # Tell other clients in the Room that a Player left.
     redis_db = get_redis_db()
-    room_sub_key = get_room_subscription_key(room_id)
-    player_joined_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
-    redis_db.publish(room_sub_key, player_joined_msg)
+    player_left_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
+    redis_db.publish_to_room(room_id, player_left_msg)
 
     return {"success": True}
 
@@ -222,9 +219,8 @@ def submit_response():
 
     # Tell other clients in the same Room that Submissions changed.
     redis_db = get_redis_db()
-    room_sub_key = get_room_subscription_key(room_id)
     submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
-    redis_db.publish(room_sub_key, submission_update_msg)
+    redis_db.publish_to_room(room_id, submission_update_msg)
 
     return {"success": True}
 
@@ -252,9 +248,8 @@ def grade_response():
 
     # Tell other clients in the same Room that Submissions changed.
     redis_db = get_redis_db()
-    room_sub_key = get_room_subscription_key(room_id)
     submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
-    redis_db.publish(room_sub_key, submission_update_msg)
+    redis_db.publish_to_room(room_id, submission_update_msg)
 
     return {"success": True}
 
@@ -294,9 +289,7 @@ def subscribe_to_room_updates(room_id):
     # grabbed by the redis pubsub below and sent to the client via that event-stream.
 
     redis_db = get_redis_db()
-    room_pubsub = redis_db.pubsub()
-    sub_key = get_room_subscription_key(room_id)
-    room_pubsub.subscribe(sub_key)
+    room_pubsub = redis_db.subscribe_to_room(room_id)
 
     def msg_stream():
         while True:
