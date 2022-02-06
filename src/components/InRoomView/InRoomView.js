@@ -53,21 +53,26 @@ class InRoomView extends Component {
 
   componentDidMount() {
     const {
+      currentUser,
       currentRoom,
       fetchCurrentRoom,
       fetchPlayers,
       fetchSubmissions,
       fetchJGameData,
-      updateTimer
+      updateTimer,
     } = this.props;
 
+    const { id: user_id } = currentUser;
     const { id: room_id } = currentRoom;
 
     fetchPlayers();
     fetchSubmissions();
     fetchJGameData();
 
-    const eventSource = api.subscribeToRoomUpdates({ roomId: room_id });
+    const eventSource = api.subscribeToRoomUpdates({
+      userId: user_id,
+      roomId: room_id,
+    });
     eventSource.onmessage = (evt) => {
       const msg = JSON.parse(evt.data);
       switch (msg.TYPE) {
@@ -87,10 +92,10 @@ class InRoomView extends Component {
         }
 
         case "TIMER_UPDATE": {
-          updateTimer({ 
-            startTime: msg.TIMER_INFO.START_TIME, 
-            currentTime: msg.TIMER_INFO.CURRENT_TIME, 
-            totalTime: msg.TIMER_INFO.TOTAL_TIME
+          updateTimer({
+            startTime: msg.TIMER_INFO.START_TIME,
+            currentTime: msg.TIMER_INFO.CURRENT_TIME,
+            totalTime: msg.TIMER_INFO.TOTAL_TIME,
           });
           break;
         }
@@ -100,6 +105,10 @@ class InRoomView extends Component {
         }
       }
     };
+  }
+
+  componentWillUnmount() {
+    api.endSubscriptionToRoomUpdates();
   }
 }
 

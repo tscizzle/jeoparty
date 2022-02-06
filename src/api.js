@@ -114,10 +114,16 @@ const getJGameData = () => {
   });
 };
 
-const subscribeToRoomUpdates = ({ roomId }) => {
+const subscribeToRoomUpdates = ({ userId, roomId }) => {
   const baseUrl = isDev() ? "http://localhost:5000" : NICE_SERVER_URL;
-  const url = new URL(`${baseUrl}/subscribe-to-room-updates/${roomId}`);
+  const url = new URL(
+    `${baseUrl}/subscribe-to-room-updates/${userId}/${roomId}`
+  );
   return new EventSource(url);
+};
+
+const endSubscriptionToRoomUpdates = () => {
+  return nicePOST("/end-subscription-to-room-updates");
 };
 
 const api = {
@@ -133,6 +139,7 @@ const api = {
   gradeResponse,
   getJGameData,
   subscribeToRoomUpdates,
+  endSubscriptionToRoomUpdates,
 };
 
 export default api;

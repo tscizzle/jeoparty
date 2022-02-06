@@ -24,7 +24,7 @@
   },
   "scripts": {
     "start-react": "BROWSER=none react-scripts start",
-    "start-flask": "cd server/ && FLASK_ENV=development && .venv/bin/flask run",
+    "start-flask": ".venv/bin/flask run",
     "start-redis": "redis-server",
     "build": "react-scripts build",
     "test": "react-scripts test",

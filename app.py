@@ -3,7 +3,7 @@ from flask_cors import CORS
 import time
 import json
 
-from miscHelpers import (
+from server.miscHelpers import (
     get_db,
     get_redis_db,
     get_executor,
@@ -12,8 +12,8 @@ from miscHelpers import (
     format_msg_for_server_side_event,
     load_db_for_source_game,
 )
-from db import JeopartyDb
-from gameLoop import game_loop
+from server.db import JeopartyDb
+from server.gameLoop import game_loop
 
 ## TODO: only use the /build folder in prod. In dev we don't serve the web page, just
 ##     API calls, since the react dev server serves the web page.
@@ -145,13 +145,19 @@ def join_room():
 
 @app.route("/leave-room", methods=["POST"])
 def leave_room():
-    # Set the current User as having no Room.
+    # End the User's subscription to Room updates.
+
     db = get_db()
-
+    redis_db = get_redis_db()
     browser_id = get_browser_id_from_cookie(request)
+    user = db.get_user_by_browser_id(browser_id)
     room = db.get_room_by_browser_id(browser_id)
+    user_id = user["id"]
     room_id = room["id"]
+    subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
+    redis_db.publish_to_room(room_id, subscription_ending_msg)
 
+    # Set the current User as having no Room.
     user_update_query = f"""
         UPDATE {JeopartyDb.USER} SET room_id = ? WHERE browser_id = ?;
     """
@@ -286,26 +292,64 @@ def get_j_game_data():
     return {"sourceGame": source_game, "categories": categories, "clues": clues}
 
 
-@app.route("/subscribe-to-room-updates/<room_id>")
-def subscribe_to_room_updates(room_id):
+@app.route("/subscribe-to-room-updates/<user_id>/<room_id>")
+def subscribe_to_room_updates(user_id, room_id):
     # This request sets up a long-running "event-stream" from server to client. While
     # this function is going forever, messages can be put in redis, and they will be
     # grabbed by the redis pubsub below and sent to the client via that event-stream.
 
     redis_db = get_redis_db()
+
+    # Close other open streams for this same user.
+    subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
+    redis_db.publish_to_room(room_id, subscription_ending_msg)
+    ## TODO: That makes it so we never have more than 1 ongoing loop per user, but we
+    ##      still have the issue that that 1 loop continues even after the user leaves
+    ##      (until it hits the super long time limit). So we've bounded the issue a
+    ##      couple ways, but the best would be if the loop ended right when the user
+    ##      disconnected.
+
+    # Subscribe to updates about the Room.
     room_pubsub = redis_db.subscribe_to_room(room_id)
 
     def msg_stream():
-        while True:
+        start_time = time.time()
+        time_limit = 60 * 60 * 10
+        while time.time() - start_time < time_limit:
             msg_dict = room_pubsub.get_message()
             if msg_dict and msg_dict["type"] == "message":
                 msg_bytes = msg_dict["data"]
                 msg_str = msg_bytes.decode()
+
+                # Allow the stream to be ended by a special message.
+                if msg_str == redis_db.get_room_subscription_ending_msg(user_id):
+                    break
+
+                # If it's a regular message, forward it to the client.
                 server_side_event_msg = format_msg_for_server_side_event(msg_str)
                 yield server_side_event_msg
-            time.sleep(0.001)
+
+            time.sleep(0.01)
 
     return Response(msg_stream(), mimetype="text/event-stream")
+
+
+@app.route("/end-subscription-to-room-updates", methods=["POST"])
+def end_subscription_to_room_updates():
+    db = get_db()
+
+    browser_id = get_browser_id_from_cookie(request)
+    room = db.get_room_by_browser_id(browser_id)
+    if room:
+        user = db.get_user_by_browser_id(browser_id)
+        user_id = user["id"]
+        room_id = room["id"]
+
+        redis_db = get_redis_db()
+        subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
+        redis_db.publish_to_room(room_id, subscription_ending_msg)
+
+    return {"success": True}
 
 
 #####

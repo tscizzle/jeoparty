@@ -3,7 +3,8 @@ from flask_executor import Executor
 import string
 import random
 
-from db import JeopartyDb, JeopartyRedis
+from server.db import JeopartyDb, JeopartyRedis
+from server.jarchiveParser import JarchiveParser
 
 
 def get_db():
@@ -49,8 +50,6 @@ def format_msg_for_server_side_event(msg):
 
 
 def load_db_for_source_game():
-    from jarchiveParser import JarchiveParser
-
     random_game_info = JarchiveParser().parse()
     jarchive_id = random_game_info["episode_details"]["jarchive_id"]
     taped_date = random_game_info["episode_details"]["taped"]

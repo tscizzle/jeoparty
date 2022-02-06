@@ -75,7 +75,7 @@ class JeopartyDb:
 
     def create_tables(self):
         print("Creating database...")
-        with open("schema.sql", "r") as f:
+        with open("server/schema.sql", "r") as f:
             schema_creation_sql_script = f.read()
         self.execute_and_commit(schema_creation_sql_script, do_execute_script=True)
         print("Created database.")
@@ -142,7 +142,7 @@ class JeopartyRedis:
 
     @staticmethod
     def get_room_subscription_key(room_id):
-        return f"room-{room_id}"
+        return f"ROOM-{room_id}"
 
     def publish_to_room(self, room_id, msg):
         room_sub_key = self.get_room_subscription_key(room_id)
@@ -153,3 +153,10 @@ class JeopartyRedis:
         room_pubsub = self.conn.pubsub()
         room_pubsub.subscribe(room_sub_key)
         return room_pubsub
+
+    def get_room_subscription_ending_msg(self, user_id):
+        return f"END-{user_id}"
+
+    def send_room_subscription_ending_msg(self, user_id):
+        msg = self.get_room_subscription_ending_msg(user_id)
+        self.publish_to_room(msg)

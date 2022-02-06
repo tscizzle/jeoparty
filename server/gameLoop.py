@@ -2,7 +2,7 @@ import json
 import time
 import traceback
 
-from db import JeopartyDb, JeopartyRedis
+from server.db import JeopartyDb, JeopartyRedis
 
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
