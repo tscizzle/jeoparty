@@ -4,7 +4,7 @@ export const userShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
   browser_id: PropTypes.string.isRequired,
   room_id: PropTypes.number,
-  is_host: PropTypes.oneOf([0, 1]),
+  is_host: PropTypes.bool,
   name: PropTypes.string,
   image_blob: PropTypes.string,
 });
@@ -13,7 +13,7 @@ export const roomShape = PropTypes.shape({
   id: PropTypes.number.isRequired,
   source_game_id: PropTypes.number.isRequired,
   room_code: PropTypes.string.isRequired,
-  has_game_been_started: PropTypes.oneOf([0, 1]).isRequired,
+  has_game_been_started: PropTypes.bool.isRequired,
   current_clue_id: PropTypes.number,
   current_clue_stage: PropTypes.oneOf([
     "preparing",
@@ -30,7 +30,7 @@ export const submissionShape = PropTypes.shape({
   room_id: PropTypes.number.isRequired,
   text: PropTypes.string,
   graded_as: PropTypes.oneOf(["correct", "incorrect", "blank"]),
-  is_fake_guess: PropTypes.oneOf([0, 1]).isRequired,
+  is_fake_guess: PropTypes.bool.isRequired,
 });
 
 export const sourceGameShape = PropTypes.shape({
@@ -56,7 +56,7 @@ export const clueShape = PropTypes.shape({
   clue: PropTypes.string,
   answer: PropTypes.string,
   money: PropTypes.number,
-  is_daily_double: PropTypes.oneOf([0, 1]).isRequired,
+  is_daily_double: PropTypes.bool.isRequired,
 });
 
 export const jGameDataShape = PropTypes.shape({
