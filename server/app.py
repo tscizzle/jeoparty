@@ -59,7 +59,7 @@ def get_players():
     if room:
         room_id = room["id"]
         players_query = f"""
-            SELECT * FROM {JeopartyDb.USER} WHERE room_id = ? AND is_host != 1;
+            SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.USER} WHERE room_id = %s AND is_host != 1;
         """
         player_rows = db.execute_and_fetch(players_query, (room_id,))
     else:
@@ -78,13 +78,13 @@ def create_room():
     db = get_db()
     room_code = generate_room_code()
     source_game_query = (
-        f"SELECT id FROM {JeopartyDb.SOURCE_GAME} WHERE jarchive_id = ?;"
+        f"SELECT id FROM {JeopartyDb.SCHEMA}.{JeopartyDb.SOURCE_GAME} WHERE jarchive_id = %s;"
     )
     source_game_row = db.execute_and_fetch(
         source_game_query, (jarchive_id,), do_fetch_one=True
     )
     room_insert_query = (
-        f"INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code) VALUES (?, ?);"
+        f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.ROOM} (source_game_id, room_code) VALUES (%s, %s);"
     )
     room_id = db.execute_and_commit(
         room_insert_query, (source_game_row["id"], room_code)
@@ -93,7 +93,7 @@ def create_room():
     # Update the current User to be in the new Room.
     browser_id = get_browser_id_from_cookie(request)
     user_update_query = f"""
-        UPDATE {JeopartyDb.USER} SET room_id = ?, is_host = true WHERE browser_id = ?;
+        UPDATE {JeopartyDb.SCHEMA}.{JeopartyDb.USER} SET room_id = %s, is_host = true WHERE browser_id = %s;
     """
     db.execute_and_commit(user_update_query, (room_id, browser_id))
 
@@ -109,7 +109,7 @@ def join_room():
     # Check if there is a matching Room in the db.
     db = get_db()
     room_code = request.json["roomCode"]
-    room_query = f"SELECT id FROM {JeopartyDb.ROOM} WHERE room_code = ?"
+    room_query = f"SELECT id FROM {JeopartyDb.SCHEMA}.{JeopartyDb.ROOM} WHERE room_code = %s"
     room_row = db.execute_and_fetch(room_query, (room_code,), do_fetch_one=True)
 
     # If the Room exists, have the current User join it.
@@ -120,9 +120,9 @@ def join_room():
         canvas_image_blob = request.json["canvasImageBlob"]
 
         user_update_query = f"""
-            UPDATE {JeopartyDb.USER}
-            SET room_id = ?, registered_name = ?, image_blob = ?, is_host = false
-            WHERE browser_id = ?;
+            UPDATE {JeopartyDb.SCHEMA}.{JeopartyDb.USER}
+            SET room_id = %s, registered_name = %s, image_blob = %s, is_host = false
+            WHERE browser_id = %s;
         """
         room_id = room_row["id"]
         db.execute_and_commit(
@@ -151,7 +151,7 @@ def leave_room():
     room_id = room["id"]
 
     user_update_query = f"""
-        UPDATE {JeopartyDb.USER} SET room_id = ? WHERE browser_id = ?;
+        UPDATE {JeopartyDb.SCHEMA}.{JeopartyDb.USER} SET room_id = %s WHERE browser_id = %s;
     """
     db.execute_and_commit(user_update_query, (None, browser_id))
 
@@ -174,7 +174,7 @@ def start_game():
     room_id = room["id"]
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET has_game_been_started = 1 WHERE id = ?;
+        UPDATE {JeopartyDb.SCHEMA}.{JeopartyDb.ROOM} SET has_game_been_started = true WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 
@@ -189,7 +189,7 @@ def get_submissions():
     room = db.get_room_by_browser_id(browser_id)
     room_id = room["id"]
 
-    submission_query = f"""SELECT * FROM {JeopartyDb.SUBMISSION} WHERE room_id = ?;"""
+    submission_query = f"""SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.SUBMISSION} WHERE room_id = %s;"""
     submission_rows = db.execute_and_fetch(submission_query, (room_id,))
 
     submissions = {
@@ -212,8 +212,8 @@ def submit_response():
     is_fake_guess = request.json.get("isFakeGuess", 0)
 
     submission_insert_query = f"""
-        INSERT INTO {JeopartyDb.SUBMISSION}
-        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (?, ?, ?, ?, ?);
+        INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.SUBMISSION}
+        (user_id, clue_id, room_id, text, is_fake_guess) VALUES (%s, %s, %s, %s, %s);
     """
     db.execute_and_commit(
         submission_insert_query,
@@ -243,8 +243,8 @@ def grade_response():
 
     # This combo insert-update is how SQLite does upserts.
     grade_response_query = f"""
-        INSERT INTO {JeopartyDb.SUBMISSION}
-        (user_id, clue_id, room_id, graded_as) VALUES (?, ?, ?, ?)
+        INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.SUBMISSION}
+        (user_id, clue_id, room_id, graded_as) VALUES (%s, %s, %s, %s)
         ON CONFLICT(user_id, clue_id, room_id)
         DO UPDATE SET graded_as = excluded.graded_as;
     """
@@ -269,9 +269,9 @@ def get_j_game_data():
     room = db.get_room_by_browser_id(browser_id)
     source_game_id = room["source_game_id"]
 
-    source_game_query = f"SELECT * FROM {JeopartyDb.SOURCE_GAME} WHERE id = ?;"
-    category_query = f"SELECT * FROM {JeopartyDb.CATEGORY} WHERE source_game_id = ?;"
-    clue_query = f"SELECT * FROM {JeopartyDb.CLUE} WHERE source_game_id = ?;"
+    source_game_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.SOURCE_GAME} WHERE id = %s;"
+    category_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.CATEGORY} WHERE source_game_id = %s;"
+    clue_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.CLUE} WHERE source_game_id = %s;"
     source_game_row = db.execute_and_fetch(
         source_game_query, (source_game_id,), do_fetch_one=True
     )
@@ -319,6 +319,6 @@ def subscribe_to_room_updates(room_id):
 @app.before_first_request
 def setup():
     # DB stuff
-    JeopartyDb.clear_all()
+    JeopartyDb().clear_all()
     db = get_db()
     db.create_tables()

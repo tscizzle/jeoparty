@@ -1,6 +1,6 @@
 import os
-import sqlite3
-
+import psycopg2
+import psycopg2.extras
 
 DB_PATH = "jeoparty.db"
 
@@ -8,6 +8,7 @@ DB_PATH = "jeoparty.db"
 class JeopartyDb:
     """Object that represents a connection to our SQLite db."""
 
+    SCHEMA = "jeoparty"
     # Table names
     USER = "user"
     ROOM = "room"
@@ -18,8 +19,15 @@ class JeopartyDb:
     SUBMISSION = "submission"
 
     def __init__(self):
-        self.conn = sqlite3.connect(DB_PATH)
-        self.conn.row_factory = sqlite3.Row
+        self.conn = psycopg2.connect(database="jeoparty_db", user="jeoparty_db_user",
+                                     password="", host="127.0.0.1", port="5432")
+        # self.conn.row_factory = sqlite3.Row
+        """
+        preethi=# create database jeoparty_db;
+        CREATE DATABASE
+        preethi=# create user jeoparty_db_user;
+        preethi=# ALTER USER jeoparty_db_user WITH SUPERUSER;
+        """
 
     #####
     ## General DB Methods
@@ -42,12 +50,15 @@ class JeopartyDb:
         """
         cur = self.conn.cursor()
 
-        execute_method = cur.executescript if do_execute_script else cur.execute
-        execute_method(*execute_args)
+        cur.execute(*execute_args)
+        # execute_method = cur.executescript if do_execute_script else cur.execute
+        # execute_method(*execute_args)
 
         self.conn.commit()
-
-        return cur.lastrowid
+        try:
+            return cur.fetchone()[0]
+        except Exception:
+            return
 
     def execute_and_fetch(self, *execute_args, do_fetch_one=False):
         """Execute a SQL query and fetch the results.
@@ -61,10 +72,8 @@ class JeopartyDb:
         :return sqlite3.Row[]: (if doFetchOne is False)
         :return sqlite3.Row|None: (if doFetchOne is True)
         """
-        cur = self.conn.cursor()
-
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(*execute_args)
-
         fetch_method = cur.fetchone if do_fetch_one else cur.fetchall
         results = fetch_method()
 
@@ -80,16 +89,9 @@ class JeopartyDb:
         self.execute_and_commit(schema_creation_sql_script, do_execute_script=True)
         print("Created database.")
 
-    @staticmethod
-    def clear_all():
-        """Delete the entire db. For SQLite that is just deleting the .db file."""
-        print("Clearing database...")
-        try:
-            os.remove(DB_PATH)
-            print("Cleared database.")
-        except OSError:
-            pass
-            print("No database to clear.")
+    def clear_all(self):
+        """Delete the entire db."""
+        self.execute_and_commit("DROP SCHEMA IF EXISTS jeoparty CASCADE;")
 
     #####
     ## Common Queries
@@ -98,17 +100,17 @@ class JeopartyDb:
     def get_user_by_browser_id(self, browser_id):
         # For the browser_id saved as a cookie in someone's browser, find the existing
         # User in the db.
-        user_query = f"SELECT * FROM {JeopartyDb.USER} WHERE browser_id = ?;"
+        user_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.USER} WHERE browser_id = %s;"
         user_row = self.execute_and_fetch(user_query, (browser_id,), do_fetch_one=True)
 
         # If no User exists yet with that browser_id, create a User with it.
         if user_row is None:
             user_insert_query = (
-                f"INSERT INTO {JeopartyDb.USER} (browser_id) VALUES (?);"
+                f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.USER} (browser_id) VALUES (%s);"
             )
             try:
                 self.execute_and_commit(user_insert_query, (browser_id,))
-            except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
                 # While trying to create a User, some other function created one,
                 # which is fine.
                 pass
@@ -125,9 +127,14 @@ class JeopartyDb:
 
         room_row = None
         if user["room_id"] is not None:
-            room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = ?;"
+            room_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.ROOM} WHERE id = %s;"
             room_id = user["room_id"]
             room_row = self.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
 
         room = dict(room_row) if room_row is not None else None
         return room
+
+# if __name__ == "__main__":
+#     JeopartyDb().execute_and_fetch(
+#         "SELECT * FROM jeoparty.user WHERE browser_id = %s;", ('voltw51qlw3gtkbf',))
+#     a = 3
