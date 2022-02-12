@@ -55,7 +55,7 @@ def load_db_for_source_game():
     taped_date = random_game_info["episode_details"]["taped"]
     db = get_db()
     source_game_id = db.execute_and_commit(
-        f"INSERT INTO {JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (?, ?)",
+        f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.SOURCE_GAME} (taped_date, jarchive_id) VALUES (%s, %s) RETURNING ID",
         (taped_date, jarchive_id),
     )
     inserted_categories = {"single": [], "double": [], "final": []}
@@ -64,8 +64,8 @@ def load_db_for_source_game():
         round_type = clue_details["category_info"]["round_type"]
         if category_text not in inserted_categories[round_type]:
             db.execute_and_commit(
-                f"INSERT INTO {JeopartyDb.CATEGORY} "
-                f"(source_game_id, col_order_index, text, round_type) VALUES (?, ?, ?, ?)",
+                f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.CATEGORY} "
+                f"(source_game_id, col_order_index, text, round_type) VALUES (%s, %s, %s, %s)",
                 (
                     source_game_id,
                     clue_details["category_info"]["col_order_index"],
@@ -76,7 +76,7 @@ def load_db_for_source_game():
             inserted_categories[round_type].append(category_text)
 
         category_query = (
-            f"SELECT id FROM {JeopartyDb.CATEGORY} WHERE text = ? AND round_type = ?"
+            f"SELECT id FROM {JeopartyDb.SCHEMA}.{JeopartyDb.CATEGORY} WHERE text = %s AND round_type = %s"
         )
         category_row = db.execute_and_fetch(
             category_query, (category_text, round_type), do_fetch_one=True
@@ -84,8 +84,8 @@ def load_db_for_source_game():
         category_id = dict(category_row)["id"]
 
         db.execute_and_commit(
-            f"INSERT INTO {JeopartyDb.CLUE} "
-            f"(category_id, source_game_id, clue, answer, money) VALUES (?, ?, ?, ?, ?)",
+            f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.CLUE} "
+            f"(category_id, source_game_id, clue, answer, money) VALUES (%s, %s, %s, %s, %s)",
             (
                 category_id,
                 source_game_id,
