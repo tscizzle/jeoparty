@@ -15,6 +15,7 @@ import HostView from "components/HostView/HostView";
 import PlayerView from "components/PlayerView/PlayerView";
 
 import "components/InRoomView/InRoomView.scss";
+import { fetchCurrentRoom } from "state-management/actions";
 
 class InRoomView extends Component {
   static propTypes = {
@@ -32,6 +33,8 @@ class InRoomView extends Component {
     /* supplied by withTimer */
     updateTimer: PropTypes.func.isRequired,
   };
+
+  UPDATE_CHECK_INTERVAL_sec = 1;
 
   /* Lifecycle methods. */
 
@@ -55,11 +58,9 @@ class InRoomView extends Component {
     const {
       currentUser,
       currentRoom,
-      fetchCurrentRoom,
       fetchPlayers,
       fetchSubmissions,
       fetchJGameData,
-      updateTimer,
     } = this.props;
 
     const { id: user_id } = currentUser;
@@ -69,47 +70,18 @@ class InRoomView extends Component {
     fetchSubmissions();
     fetchJGameData();
 
-    const eventSource = api.subscribeToRoomUpdates({
-      userId: user_id,
-      roomId: room_id,
-    });
-    eventSource.onmessage = (evt) => {
-      const msg = JSON.parse(evt.data);
-      switch (msg.TYPE) {
-        case "ROOM_UPDATE": {
-          fetchCurrentRoom();
-          break;
-        }
-
-        case "PLAYERS_UPDATE": {
-          fetchPlayers();
-          break;
-        }
-
-        case "SUBMISSION_UPDATE": {
-          fetchSubmissions();
-          break;
-        }
-
-        case "TIMER_UPDATE": {
-          updateTimer({
-            startTime: msg.TIMER_INFO.START_TIME,
-            currentTime: msg.TIMER_INFO.CURRENT_TIME,
-            totalTime: msg.TIMER_INFO.TOTAL_TIME,
-          });
-          break;
-        }
-
-        default: {
-          break;
-        }
-      }
-    };
+    this.checkForUpdates();
   }
 
-  componentWillUnmount() {
-    api.endSubscriptionToRoomUpdates();
-  }
+  /* Helpers. */
+
+  checkForUpdates = () => {
+    const { fetchCurrentRoom } = this.props;
+
+    fetchCurrentRoom();    
+
+    setTimeout(this.checkForUpdates, UPDATE_CHECK_INTERVAL_sec * 1000);
+  };
 }
 
 InRoomView = withCurrentUser(InRoomView);

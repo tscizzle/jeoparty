@@ -21,7 +21,7 @@ const getInitialState = () => ({
   jGameData: null,
   timerStartTime: null,
   timerCurrentTime: null,
-  timerTotalTime: null
+  timerTotalTime: null,
 });
 
 const mainReducer = (state = getInitialState(), action) => {

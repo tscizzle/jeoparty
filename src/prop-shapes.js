@@ -21,6 +21,7 @@ export const roomShape = PropTypes.shape({
     "grading",
     "finished",
   ]),
+  last_updated_at: PropTypes.number,
 });
 
 export const submissionShape = PropTypes.shape({

@@ -7,20 +7,29 @@ import redis
 class JeopartyDb:
     """Object that represents a connection to our SQLite db."""
 
-    SQLITE_DB_PATH = "jeoparty.db"
     SCHEMA = "jeoparty"
     # Table names
-    USER = "user"
-    ROOM = "room"
-    SOURCE_GAME = "source_game"
-    CATEGORY = "category"
-    CLUE = "clue"
-    REACHED_CLUE = "reached_clue"
-    SUBMISSION = "submission"
+    USER = f"{SCHEMA}.user"
+    ROOM = f"{SCHEMA}.room"
+    SOURCE_GAME = f"{SCHEMA}.source_game"
+    CATEGORY = f"{SCHEMA}.category"
+    CLUE = f"{SCHEMA}.clue"
+    REACHED_CLUE = f"{SCHEMA}.reached_clue"
+    SUBMISSION = f"{SCHEMA}.submission"
 
     def __init__(self):
-        self.conn = psycopg2.connect(database="jeoparty_db", user="jeoparty_db_user",
-                                     password="", host="127.0.0.1", port="5432")
+        if os.environ.get("PG_HOST"):
+            host = os.environ["PG_HOST"]
+            port = os.environ["PG_PORT"]
+            self.conn = psycopg2.connect(
+                database="jeoparty_db",
+                user="jeoparty_db_user",
+                password="",
+                host=host,
+                port=port,
+            )
+        else:
+            self.conn = psycopg2.connect(database="jeoparty_db")
         """
         commands to run this locally:
         # CREATE DATABASE jeoparty_db;
@@ -99,13 +108,13 @@ class JeopartyDb:
     def get_user_by_browser_id(self, browser_id):
         # For the browser_id saved as a cookie in someone's browser, find the existing
         # User in the db.
-        user_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.USER} WHERE browser_id = %s;"
+        user_query = f"SELECT * FROM {JeopartyDb.USER} WHERE browser_id = %s;"
         user_row = self.execute_and_fetch(user_query, (browser_id,), do_fetch_one=True)
 
         # If no User exists yet with that browser_id, create a User with it.
         if user_row is None:
             user_insert_query = (
-                f"INSERT INTO {JeopartyDb.SCHEMA}.{JeopartyDb.USER} (browser_id) VALUES (%s);"
+                f"INSERT INTO {JeopartyDb.USER} (browser_id) VALUES (%s);"
             )
             try:
                 self.execute_and_commit(user_insert_query, (browser_id,))
@@ -125,7 +134,7 @@ class JeopartyDb:
         user = self.get_user_by_browser_id(browser_id)
         room_row = None
         if user["room_id"] is not None:
-            room_query = f"SELECT * FROM {JeopartyDb.SCHEMA}.{JeopartyDb.ROOM} WHERE id = %s;"
+            room_query = f"SELECT * FROM {JeopartyDb.ROOM} WHERE id = %s;"
             room_id = user["room_id"]
             room_row = self.execute_and_fetch(room_query, (room_id,), do_fetch_one=True)
 
