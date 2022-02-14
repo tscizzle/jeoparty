@@ -12,7 +12,7 @@
 
   .graded-answer {
     &.points-change-positive {
-      color: $darkerGray;
+      color: $green;
     }
 
     &.points-change-negative {
@@ -20,7 +20,7 @@
     }
 
     &.points-change-neutral {
-      color: $green;
+      color: $darkerGray;
     }
   }
 
