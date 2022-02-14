@@ -30,10 +30,10 @@ const createRoomUpdateChecker = () => {
       // been an update on the server side since we last fetched other resources.
       const { currentRoom } = store.getState();
       const needToFetchPlayers =
-        fetchedRoom.players_updated_at.getTime() !=
+        fetchedRoom.players_updated_at.getTime() !==
         currentRoom.players_updated_at.getTime();
       const needToFetchSubmissions =
-        fetchedRoom.submissions_updated_at.getTime() !=
+        fetchedRoom.submissions_updated_at.getTime() !==
         currentRoom.submissions_updated_at.getTime();
 
       store.dispatch(fetchCurrentRoomSuccess({ room: fetchedRoom }));

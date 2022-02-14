@@ -85,14 +85,7 @@ class Clue extends Component {
   /* Lifecycle methods. */
 
   render() {
-    const {
-      clue,
-      currentRoom,
-      jGameData,
-      timerStartTime,
-      timerCurrentTime,
-      timerTotalTime,
-    } = this.props;
+    const { clue, currentRoom, jGameData } = this.props;
 
     const { id: this_clue_id, clue: clueText, money } = clue;
     const { current_clue_id, current_clue_stage } = currentRoom;
