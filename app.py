@@ -85,7 +85,11 @@ def create_room():
         source_game_query, (jarchive_id,), do_fetch_one=True
     )
 
-    room_insert_query = f"INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code) VALUES (%s, %s) RETURNING ID;"
+    room_insert_query = f"""
+        INSERT INTO {JeopartyDb.ROOM} (source_game_id, room_code)
+        VALUES (%s, %s)
+        RETURNING ID;
+    """
     room_id = db.execute_and_commit(
         room_insert_query, (source_game_row["id"], room_code)
     )
@@ -133,7 +137,7 @@ def join_room():
         # Update the Room's update time.
         room_update_query = f"""
             UPDATE {JeopartyDb.ROOM}
-            SET last_updated_at = CURRENT_TIMESTAMP
+            SET players_updated_at = CURRENT_TIMESTAMP
             WHERE id = %s;
         """
         db.execute_and_commit(room_update_query, (room_id,))
@@ -160,7 +164,9 @@ def leave_room():
 
     # Update the Room's update time.
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+        UPDATE {JeopartyDb.ROOM}
+        SET players_updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 
@@ -178,7 +184,7 @@ def start_game():
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM}
-        SET has_game_been_started = true, last_updated_at = CURRENT_TIMESTAMP
+        SET has_game_been_started = true
         WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
@@ -227,7 +233,9 @@ def submit_response():
 
     # Update the Room's update time.
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+        UPDATE {JeopartyDb.ROOM}
+        SET submissions_updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 
@@ -257,7 +265,9 @@ def grade_response():
 
     # Update the Room's update time.
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+        UPDATE {JeopartyDb.ROOM}
+        SET submissions_updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 

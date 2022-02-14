@@ -35,7 +35,8 @@ CREATE TABLE jeoparty.room (
     timer_started_at TIMESTAMP,
     timer_seconds_elapsed REAL,
     timer_will_end_at TIMESTAMP,
-    last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    players_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    submissions_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CHECK(current_clue_stage IN ('preparing','answering','grading','finished'))
 );
 

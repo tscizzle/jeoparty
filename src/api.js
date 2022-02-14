@@ -64,7 +64,8 @@ const getCurrentRoom = () => {
       dateFieldPaths: [
         "room.timer_started_at",
         "room.timer_will_end_at",
-        "room.last_updated_at",
+        "room.players_updated_at",
+        "room.submissions_updated_at",
       ],
     });
     return processedResp;

@@ -27,15 +27,21 @@ const createRoomUpdateChecker = () => {
       }
 
       // Check the fetched Room vs the Room we already have in state to see if there has
-      // been an update on the server side since we last fetched.
+      // been an update on the server side since we last fetched other resources.
       const { currentRoom } = store.getState();
-      const needToFetchOtherUpdates =
-        fetchedRoom.last_updated_at.getTime() !=
-        currentRoom.last_updated_at.getTime();
+      const needToFetchPlayers =
+        fetchedRoom.players_updated_at.getTime() !=
+        currentRoom.players_updated_at.getTime();
+      const needToFetchSubmissions =
+        fetchedRoom.submissions_updated_at.getTime() !=
+        currentRoom.submissions_updated_at.getTime();
 
       store.dispatch(fetchCurrentRoomSuccess({ room: fetchedRoom }));
-      if (needToFetchOtherUpdates) {
-        store.dispatch([fetchPlayers(), fetchSubmissions()]);
+      if (needToFetchPlayers) {
+        store.dispatch(fetchPlayers());
+      }
+      if (needToFetchSubmissions) {
+        store.dispatch(fetchSubmissions());
       }
     });
 
