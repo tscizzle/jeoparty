@@ -15,7 +15,7 @@ from server.gameLoop import game_loop
 
 ## TODO: only use the /build folder in prod. In dev we don't serve the web page, just
 ##     API calls, since the react dev server serves the web page.
-app = Flask(__name__, template_folder="../build/", static_folder="../build/static/")
+app = Flask(__name__, template_folder="build/", static_folder="build/static/")
 
 ## TODO: only do this CORS (cross-origin) stuff in dev, not prod (in prod there is no
 ##      cross-origin needed, since page will be loaded from same origin as these api
