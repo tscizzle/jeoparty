@@ -21,7 +21,10 @@ export const roomShape = PropTypes.shape({
     "grading",
     "finished",
   ]),
-  last_updated_at: PropTypes.number,
+  timer_started_at: PropTypes.instanceOf(Date),
+  timer_seconds_elapsed: PropTypes.number,
+  timer_will_end_at: PropTypes.instanceOf(Date),
+  last_updated_at: PropTypes.instanceOf(Date).isRequired,
 });
 
 export const submissionShape = PropTypes.shape({

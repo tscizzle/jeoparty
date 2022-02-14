@@ -16,5 +16,4 @@ Unless otherwise stated, run any instructed commands at the root of this repo in
 
 ## Database setup
 
-- Install Redis.
 - Install Postgres.

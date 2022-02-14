@@ -32,7 +32,10 @@ CREATE TABLE jeoparty.room (
     room_code TEXT NOT NULL,
     has_game_been_started BOOLEAN DEFAULT false,
     current_clue_stage TEXT,
-    last_updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timer_started_at TIMESTAMP,
+    timer_seconds_elapsed REAL,
+    timer_will_end_at TIMESTAMP,
+    last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CHECK(current_clue_stage IN ('preparing','answering','grading','finished'))
 );
 

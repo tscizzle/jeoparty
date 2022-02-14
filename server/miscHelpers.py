@@ -3,7 +3,7 @@ from flask_executor import Executor
 import string
 import random
 
-from server.db import JeopartyDb, JeopartyRedis
+from server.db import JeopartyDb
 from server.jarchiveParser import JarchiveParser
 
 
@@ -12,13 +12,6 @@ def get_db():
     if db is None:
         db = g._database = JeopartyDb()
     return db
-
-
-def get_redis_db():
-    redis_db = getattr(g, "_redis_db", None)
-    if redis_db is None:
-        redis_db = g._redis_db = JeopartyRedis()
-    return redis_db
 
 
 def get_executor(app):

@@ -1,8 +1,6 @@
 import moment from "moment-timezone";
 import _ from "lodash";
 
-import { isDev } from "misc-helpers";
-
 /* Fetching */
 
 export const NICE_SERVER_URL = window.location.origin;
@@ -44,8 +42,10 @@ const dateify = ({ obj, dateFieldPaths }) => {
     const hasField = _.has(obj, path);
     if (hasField) {
       const stringVal = _.get(obj, path);
-      const dateVal = moment.tz(stringVal, "UTC").toDate();
-      _.set(newObj, path, dateVal);
+      if (stringVal) {
+        const dateVal = moment.tz(stringVal, "UTC").toDate();
+        _.set(newObj, path, dateVal);
+      }
     }
   });
   return newObj;
@@ -58,7 +58,17 @@ const getCurrentUser = () => {
 };
 
 const getCurrentRoom = () => {
-  return niceGET("/get-current-room");
+  return niceGET("/get-current-room").then((resp) => {
+    const processedResp = dateify({
+      obj: resp,
+      dateFieldPaths: [
+        "room.timer_started_at",
+        "room.timer_will_end_at",
+        "room.last_updated_at",
+      ],
+    });
+    return processedResp;
+  });
 };
 
 const getPlayers = () => {
@@ -114,10 +124,6 @@ const getJGameData = () => {
   });
 };
 
-const getUpdateTimes = () => {
-  return niceGET(`/get-update-times`);
-};
-
 const api = {
   getCurrentUser,
   getCurrentRoom,
@@ -130,7 +136,6 @@ const api = {
   submitResponse,
   gradeResponse,
   getJGameData,
-  getUpdateTimes,
 };
 
 export default api;

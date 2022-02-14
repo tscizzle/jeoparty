@@ -246,7 +246,6 @@ class PlayerView extends Component {
         .values()
         .find({ clue_id: current_clue_id, user_id });
     }
-    console.log(currentSubmission);
 
     const showAnsweringForm = Boolean(
       current_clue_id &&

@@ -1,8 +1,8 @@
-import json
 import time
+from datetime import datetime, timedelta
 import traceback
 
-from server.db import JeopartyDb, JeopartyRedis
+from server.db import JeopartyDb
 
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
@@ -21,8 +21,6 @@ def game_loop(room_id):
 
         db = JeopartyDb()
 
-        redis_db = JeopartyRedis()
-
         wait_for_game_to_be_started(db, room_id)
 
         source_game_id = get_source_game_id_for_room(db, room_id)
@@ -31,7 +29,7 @@ def game_loop(room_id):
             while next_clue_id := get_next_clue_id(
                 db, room_id, source_game_id, round_type
             ):
-                run_next_clue(next_clue_id, db, room_id, redis_db)
+                run_next_clue(next_clue_id, db, room_id)
 
     except Exception:
         print(traceback.format_exc())
@@ -55,14 +53,13 @@ def get_source_game_id_for_room(db, room_id):
     return source_game_id
 
 
-def run_next_clue(clue_id, db, room_id, redis_db):
+def run_next_clue(clue_id, db, room_id):
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM}
         SET current_clue_id = %s, current_clue_stage = 'preparing'
         WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (clue_id, room_id))
-    _send_room_update_to_redis(redis_db, room_id)
 
     time.sleep(CLUE_PREPARE_TIME)
 
@@ -72,23 +69,20 @@ def run_next_clue(clue_id, db, room_id, redis_db):
         WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (clue_id, room_id))
-    _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_submit(db, room_id, clue_id, redis_db)
+    wait_for_players_to_submit(db, room_id, clue_id)
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'grading' WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
-    _send_room_update_to_redis(redis_db, room_id)
 
-    wait_for_players_to_grade(db, room_id, clue_id, redis_db)
+    wait_for_players_to_grade(db, room_id, clue_id)
 
     room_update_query = f"""
         UPDATE {JeopartyDb.ROOM} SET current_clue_stage = 'finished' WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
-    _send_room_update_to_redis(redis_db, room_id)
 
     insert_reached_clue_query = f"""
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (%s, %s);
@@ -116,6 +110,7 @@ def get_next_clue_id(db, room_id, source_game_id, round_type):
         do_fetch_one=True,
     )
     next_clue_id = next_clue_row["id"] if next_clue_row is not None else None
+    print(next_clue_id)
     return next_clue_id
 
 
@@ -140,7 +135,8 @@ def get_did_all_players_submit(db, room_id, clue_id, check_grading=False):
 def wait_for_game_to_be_started(db, room_id):
     has_game_been_started = False
     game_start_timeout = False
-    start_time = time.time()
+
+    start_time = datetime.utcnow()
     while not has_game_been_started and not game_start_timeout:
         has_game_been_started_query = f"""
             SELECT 1 FROM {JeopartyDb.ROOM} WHERE id = %s AND has_game_been_started = true;
@@ -150,60 +146,89 @@ def wait_for_game_to_be_started(db, room_id):
             (room_id,),
             do_fetch_one=True,
         )
-        game_start_timeout = time.time() - start_time > GAME_START_TIME_LIMIT
+
+        current_time = datetime.utcnow()
+        elapsed_sec = (current_time - start_time).total_seconds()
+        game_start_timeout = elapsed_sec > GAME_START_TIME_LIMIT
+
         time.sleep(WHILE_LOOP_SLEEP)
 
 
-def wait_for_players_to_submit(db, room_id, clue_id, redis_db):
+def wait_for_players_to_submit(db, room_id, clue_id):
     all_players_submitted = False
     response_timeout = False
-    start_time = time.time()
+
+    start_time = datetime.utcnow()
+    end_time = start_time + timedelta(seconds=RESPONSE_TIME_LIMIT)
+    timer_start_query = f"""
+        UPDATE {JeopartyDb.ROOM}
+        SET timer_started_at = %s, timer_will_end_at = %s
+        WHERE id = %s;
+    """
+    db.execute_and_commit(timer_start_query, (start_time, end_time, room_id))
+    print(start_time, end_time)
+    print("should be inserted")
+
     while not all_players_submitted and not response_timeout:
         all_players_submitted = get_did_all_players_submit(db, room_id, clue_id)
-        current_time = time.time()
-        response_timeout = current_time - start_time > RESPONSE_TIME_LIMIT
 
-        _send_timer_update_to_redis(
-            redis_db, room_id, start_time, current_time, RESPONSE_TIME_LIMIT
-        )
+        current_time = datetime.utcnow()
+        elapsed_sec = (current_time - start_time).total_seconds()
+        timer_elapsed_query = f"""
+            UPDATE {JeopartyDb.ROOM}
+            SET timer_seconds_elapsed = %s
+            WHERE id = %s;
+        """
+        db.execute_and_commit(timer_elapsed_query, (elapsed_sec, room_id))
+        response_timeout = current_time > end_time
 
         time.sleep(WHILE_LOOP_SLEEP)
 
+    timer_end_query = f"""
+        UPDATE {JeopartyDb.ROOM}
+        SET timer_started_at = NULL,
+            timer_seconds_elapsed = NULL,
+            timer_will_end_at = NULL
+        WHERE id = %s;
+    """
+    db.execute_and_commit(timer_end_query, (room_id,))
 
-def wait_for_players_to_grade(db, room_id, clue_id, redis_db):
+
+def wait_for_players_to_grade(db, room_id, clue_id):
     all_players_submitted = False
     response_timeout = False
-    start_time = time.time()
+
+    start_time = datetime.utcnow()
+    end_time = start_time + timedelta(seconds=GRADING_TIME_LIMIT)
+    timer_start_query = f"""
+        UPDATE {JeopartyDb.ROOM}
+        SET timer_started_at = %s, timer_will_end_at = %s
+        WHERE id = %s;
+    """
+    db.execute_and_commit(timer_start_query, (start_time, end_time, room_id))
+
     while not all_players_submitted and not response_timeout:
         all_players_submitted = get_did_all_players_submit(
             db, room_id, clue_id, check_grading=True
         )
-        current_time = time.time()
-        response_timeout = current_time - start_time > GRADING_TIME_LIMIT
 
-        _send_timer_update_to_redis(
-            redis_db, room_id, start_time, current_time, GRADING_TIME_LIMIT
-        )
+        current_time = datetime.utcnow()
+        elapsed_sec = (current_time - start_time).total_seconds()
+        timer_elapsed_query = f"""
+            UPDATE {JeopartyDb.ROOM}
+            SET timer_seconds_elapsed = %s
+            WHERE id = %s;
+        """
+        db.execute_and_commit(timer_elapsed_query, (elapsed_sec, room_id))
+        response_timeout = current_time > end_time
 
         time.sleep(WHILE_LOOP_SLEEP)
 
-
-def _send_room_update_to_redis(redis_db, room_id):
-    room_update_msg = json.dumps({"TYPE": "ROOM_UPDATE"})
-    redis_db.publish_to_room(room_id, room_update_msg)
-
-
-def _send_timer_update_to_redis(
-    redis_db, room_id, start_time, current_time, total_time
-):
-    timer_update_msg = json.dumps(
-        {
-            "TYPE": "TIMER_UPDATE",
-            "TIMER_INFO": {
-                "START_TIME": start_time,
-                "CURRENT_TIME": current_time,
-                "TOTAL_TIME": total_time,
-            },
-        }
-    )
-    redis_db.publish_to_room(room_id, timer_update_msg)
+    timer_end_query = f"""
+        UPDATE {JeopartyDb.ROOM}
+        SET timer_started_at = NULL,
+            timer_seconds_elapsed = NULL,
+            timer_will_end_at = NULL
+        WHERE id = %s;
+    """
+    db.execute_and_commit(timer_end_query, (room_id,))

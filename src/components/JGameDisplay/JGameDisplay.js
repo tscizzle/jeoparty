@@ -15,29 +15,19 @@ import withCurrentRoom from "state-management/state-connectors/with-current-room
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
 import "components/JGameDisplay/JGameDisplay.scss";
-import withTimer from "state-management/state-connectors/with-timer";
 
 class SubmissionSummary extends Component {
   static propTypes = {
-    // clue: clueShape.isRequired,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     /* supplied by withJGameData */
     jGameData: jGameDataShape.isRequired,
-    // /* supplied by withTimer */
-    // updateTimer: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const {
-      currentRoom,
-      jGameData,
-      timerStartTime,
-      timerCurrentTime,
-      timerTotalTime,
-    } = this.props;
+    const { currentRoom, jGameData } = this.props;
 
     const { current_clue_id, current_clue_stage } = currentRoom;
     const { clues } = jGameData;
@@ -45,11 +35,15 @@ class SubmissionSummary extends Component {
     const current_clue_obj = clues[current_clue_id];
 
     const showSubmissionSummary = current_clue_stage === "grading";
+
     let timerPercent = 0;
-    if (timerStartTime) {
-      timerPercent =
-        ((timerCurrentTime - timerStartTime) / timerTotalTime) * 100;
+    if (currentRoom.timer_started_at) {
+      const timerTotal_ms =
+        currentRoom.timer_will_end_at - currentRoom.timer_started_at;
+      const timerTotal_sec = timerTotal_ms / 1000;
+      timerPercent = (currentRoom.timer_seconds_elapsed / timerTotal_sec) * 100;
     }
+
     return (
       showSubmissionSummary && (
         <div className="submissionSummary">
@@ -78,7 +72,6 @@ class SubmissionSummary extends Component {
 
 SubmissionSummary = withCurrentRoom(SubmissionSummary);
 SubmissionSummary = withJGameData(SubmissionSummary);
-SubmissionSummary = withTimer(SubmissionSummary);
 
 class Clue extends Component {
   static propTypes = {
@@ -87,8 +80,6 @@ class Clue extends Component {
     currentRoom: roomShape.isRequired,
     /* supplied by withJGameData */
     jGameData: jGameDataShape.isRequired,
-    /* supplied by withTimer */
-    updateTimer: PropTypes.func.isRequired,
   };
 
   /* Lifecycle methods. */
@@ -115,11 +106,19 @@ class Clue extends Component {
     const showMoney = thisClueIdx > currentClueIdx;
     const showThisClueText =
       this_clue_id === current_clue_id && current_clue_stage === "answering";
+
     let timerPercent = 0;
-    if (timerStartTime) {
-      timerPercent =
-        ((timerCurrentTime - timerStartTime) / timerTotalTime) * 100;
+    if (currentRoom.timer_started_at) {
+      console.log(currentRoom);
+      const timerTotal_ms =
+        currentRoom.timer_will_end_at - currentRoom.timer_started_at;
+      const timerTotal_sec = timerTotal_ms / 1000;
+      timerPercent = (currentRoom.timer_seconds_elapsed / timerTotal_sec) * 100;
+      // console.log(timerTotal_ms);
+      // console.log(timerTotal_sec);
+      // console.log(timerPercent);
     }
+
     return (
       <div className="clue">
         {showMoney && <div className="money-text">${money}</div>}
@@ -143,7 +142,6 @@ class Clue extends Component {
 
 Clue = withCurrentRoom(Clue);
 Clue = withJGameData(Clue);
-Clue = withTimer(Clue);
 
 class Category extends Component {
   static propTypes = {

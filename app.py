@@ -5,11 +5,9 @@ import json
 
 from server.miscHelpers import (
     get_db,
-    get_redis_db,
     get_executor,
     get_browser_id_from_cookie,
     generate_room_code,
-    format_msg_for_server_side_event,
     load_db_for_source_game,
 )
 from server.db import JeopartyDb
@@ -132,10 +130,13 @@ def join_room():
             (room_id, name_to_register, canvas_image_blob, browser_id),
         )
 
-        # Tell other clients in the Room that a new Player joined.
-        redis_db = get_redis_db()
-        player_joined_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
-        redis_db.publish_to_room(room_id, player_joined_msg)
+        # Update the Room's update time.
+        room_update_query = f"""
+            UPDATE {JeopartyDb.ROOM}
+            SET last_updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s;
+        """
+        db.execute_and_commit(room_update_query, (room_id,))
 
         return {"success": True}
     else:
@@ -147,14 +148,9 @@ def leave_room():
     # End the User's subscription to Room updates.
 
     db = get_db()
-    redis_db = get_redis_db()
     browser_id = get_browser_id_from_cookie(request)
-    user = db.get_user_by_browser_id(browser_id)
     room = db.get_room_by_browser_id(browser_id)
-    user_id = user["id"]
     room_id = room["id"]
-    subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
-    redis_db.publish_to_room(room_id, subscription_ending_msg)
 
     # Set the current User as having no Room.
     user_update_query = f"""
@@ -162,10 +158,11 @@ def leave_room():
     """
     db.execute_and_commit(user_update_query, (None, browser_id))
 
-    # Tell other clients in the Room that a Player left.
-    redis_db = get_redis_db()
-    player_left_msg = json.dumps({"TYPE": "PLAYERS_UPDATE"})
-    redis_db.publish_to_room(room_id, player_left_msg)
+    # Update the Room's update time.
+    room_update_query = f"""
+        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+    """
+    db.execute_and_commit(room_update_query, (room_id,))
 
     return {"success": True}
 
@@ -180,7 +177,9 @@ def start_game():
     room_id = room["id"]
 
     room_update_query = f"""
-        UPDATE {JeopartyDb.ROOM} SET has_game_been_started = true WHERE id = %s;
+        UPDATE {JeopartyDb.ROOM}
+        SET has_game_been_started = true, last_updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s;
     """
     db.execute_and_commit(room_update_query, (room_id,))
 
@@ -215,7 +214,7 @@ def submit_response():
     room_id = room["id"]
     clue_id = request.json["clueId"]
     submission_text = request.json.get("submissionText", "")
-    is_fake_guess = request.json.get("isFakeGuess", 0)
+    is_fake_guess = request.json.get("isFakeGuess", False)
 
     submission_insert_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
@@ -226,10 +225,11 @@ def submit_response():
         (user_id, clue_id, room_id, submission_text, is_fake_guess),
     )
 
-    # Tell other clients in the same Room that Submissions changed.
-    redis_db = get_redis_db()
-    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
-    redis_db.publish_to_room(room_id, submission_update_msg)
+    # Update the Room's update time.
+    room_update_query = f"""
+        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+    """
+    db.execute_and_commit(room_update_query, (room_id,))
 
     return {"success": True}
 
@@ -255,10 +255,11 @@ def grade_response():
     """
     db.execute_and_commit(grade_response_query, (user_id, clue_id, room_id, graded_as))
 
-    # Tell other clients in the same Room that Submissions changed.
-    redis_db = get_redis_db()
-    submission_update_msg = json.dumps({"TYPE": "SUBMISSION_UPDATE"})
-    redis_db.publish_to_room(room_id, submission_update_msg)
+    # Update the Room's update time.
+    room_update_query = f"""
+        UPDATE {JeopartyDb.ROOM} SET last_updated_at = CURRENT_TIMESTAMP WHERE id = %s;
+    """
+    db.execute_and_commit(room_update_query, (room_id,))
 
     return {"success": True}
 
@@ -289,66 +290,6 @@ def get_j_game_data():
     }
     clues = {clue_row["id"]: dict(clue_row) for clue_row in clue_rows}
     return {"sourceGame": source_game, "categories": categories, "clues": clues}
-
-
-@app.route("/subscribe-to-room-updates/<user_id>/<room_id>")
-def subscribe_to_room_updates(user_id, room_id):
-    # This request sets up a long-running "event-stream" from server to client. While
-    # this function is going forever, messages can be put in redis, and they will be
-    # grabbed by the redis pubsub below and sent to the client via that event-stream.
-
-    redis_db = get_redis_db()
-
-    # Close other open streams for this same user.
-    subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
-    redis_db.publish_to_room(room_id, subscription_ending_msg)
-    ## TODO: That makes it so we never have more than 1 ongoing loop per user, but we
-    ##      still have the issue that that 1 loop continues even after the user leaves
-    ##      (until it hits the super long time limit). So we've bounded the issue a
-    ##      couple ways, but the best would be if the loop ended right when the user
-    ##      disconnected.
-
-    # Subscribe to updates about the Room.
-    room_pubsub = redis_db.subscribe_to_room(room_id)
-
-    def msg_stream():
-        start_time = time.time()
-        time_limit = 60 * 60 * 10
-        while time.time() - start_time < time_limit:
-            msg_dict = room_pubsub.get_message()
-            if msg_dict and msg_dict["type"] == "message":
-                msg_bytes = msg_dict["data"]
-                msg_str = msg_bytes.decode()
-
-                # Allow the stream to be ended by a special message.
-                if msg_str == redis_db.get_room_subscription_ending_msg(user_id):
-                    break
-
-                # If it's a regular message, forward it to the client.
-                server_side_event_msg = format_msg_for_server_side_event(msg_str)
-                yield server_side_event_msg
-
-            time.sleep(0.01)
-
-    return Response(msg_stream(), mimetype="text/event-stream")
-
-
-@app.route("/end-subscription-to-room-updates", methods=["POST"])
-def end_subscription_to_room_updates():
-    db = get_db()
-
-    browser_id = get_browser_id_from_cookie(request)
-    room = db.get_room_by_browser_id(browser_id)
-    if room:
-        user = db.get_user_by_browser_id(browser_id)
-        user_id = user["id"]
-        room_id = room["id"]
-
-        redis_db = get_redis_db()
-        subscription_ending_msg = redis_db.get_room_subscription_ending_msg(user_id)
-        redis_db.publish_to_room(room_id, subscription_ending_msg)
-
-    return {"success": True}
 
 
 #####

@@ -1,7 +1,6 @@
 import os
 import psycopg2
 import psycopg2.extras
-import redis
 
 
 class JeopartyDb:
@@ -140,32 +139,3 @@ class JeopartyDb:
 
         room = dict(room_row) if room_row is not None else None
         return room
-
-
-class JeopartyRedis:
-    """Object that represents a connection to our Redis instance."""
-
-    def __init__(self):
-        url = os.environ.get("REDIS_URL", "redis://localhost:6379")
-        self.conn = redis.from_url(url)
-
-    @staticmethod
-    def get_room_subscription_key(room_id):
-        return f"ROOM-{room_id}"
-
-    def publish_to_room(self, room_id, msg):
-        room_sub_key = self.get_room_subscription_key(room_id)
-        self.conn.publish(room_sub_key, msg)
-
-    def subscribe_to_room(self, room_id):
-        room_sub_key = self.get_room_subscription_key(room_id)
-        room_pubsub = self.conn.pubsub()
-        room_pubsub.subscribe(room_sub_key)
-        return room_pubsub
-
-    def get_room_subscription_ending_msg(self, user_id):
-        return f"END-{user_id}"
-
-    def send_room_subscription_ending_msg(self, user_id):
-        msg = self.get_room_subscription_ending_msg(user_id)
-        self.publish_to_room(msg)
