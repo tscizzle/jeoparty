@@ -17,16 +17,9 @@ class JeopartyDb:
     SUBMISSION = f"{SCHEMA}.submission"
 
     def __init__(self):
-        if os.environ.get("PG_HOST"):
-            host = os.environ["PG_HOST"]
-            port = os.environ["PG_PORT"]
-            self.conn = psycopg2.connect(
-                database="jeoparty_db",
-                user="jeoparty_db_user",
-                password="",
-                host=host,
-                port=port,
-            )
+        if os.environ.get("DATABASE_URL"):
+            db_url = os.environ["DATABASE_URL"]
+            self.conn = psycopg2.connect(db_url)
         else:
             self.conn = psycopg2.connect(database="jeoparty_db")
         """
