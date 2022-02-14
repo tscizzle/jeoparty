@@ -1,7 +1,7 @@
 import api from "api";
 import store from "state-management/create-store";
 import {
-  fetchCurrentRoom,
+  fetchCurrentRoomSuccess,
   fetchPlayers,
   fetchSubmissions,
 } from "state-management/actions";
@@ -29,13 +29,13 @@ const createRoomUpdateChecker = () => {
       // Check the fetched Room vs the Room we already have in state to see if there has
       // been an update on the server side since we last fetched.
       const { currentRoom } = store.getState();
-      if (fetchedRoom.last_updated_at !== currentRoom.last_updated_at) {
-        // Since there has been an update, fetch the data associated with the Room.
-        store.dispatch([
-          fetchCurrentRoom(),
-          fetchPlayers(),
-          fetchSubmissions(),
-        ]);
+      const needToFetchOtherUpdates =
+        fetchedRoom.last_updated_at.getTime() !=
+        currentRoom.last_updated_at.getTime();
+
+      store.dispatch(fetchCurrentRoomSuccess({ room: fetchedRoom }));
+      if (needToFetchOtherUpdates) {
+        store.dispatch([fetchPlayers(), fetchSubmissions()]);
       }
     });
 

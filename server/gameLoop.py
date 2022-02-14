@@ -110,7 +110,6 @@ def get_next_clue_id(db, room_id, source_game_id, round_type):
         do_fetch_one=True,
     )
     next_clue_id = next_clue_row["id"] if next_clue_row is not None else None
-    print(next_clue_id)
     return next_clue_id
 
 
@@ -166,8 +165,6 @@ def wait_for_players_to_submit(db, room_id, clue_id):
         WHERE id = %s;
     """
     db.execute_and_commit(timer_start_query, (start_time, end_time, room_id))
-    print(start_time, end_time)
-    print("should be inserted")
 
     while not all_players_submitted and not response_timeout:
         all_players_submitted = get_did_all_players_submit(db, room_id, clue_id)

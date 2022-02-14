@@ -109,14 +109,10 @@ class Clue extends Component {
 
     let timerPercent = 0;
     if (currentRoom.timer_started_at) {
-      console.log(currentRoom);
       const timerTotal_ms =
         currentRoom.timer_will_end_at - currentRoom.timer_started_at;
       const timerTotal_sec = timerTotal_ms / 1000;
       timerPercent = (currentRoom.timer_seconds_elapsed / timerTotal_sec) * 100;
-      // console.log(timerTotal_ms);
-      // console.log(timerTotal_sec);
-      // console.log(timerPercent);
     }
 
     return (

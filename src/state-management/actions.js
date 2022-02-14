@@ -45,7 +45,7 @@ export const fetchCurrentUser = () => {
   };
 };
 
-const fetchCurrentRoomSuccess = ({ room }) => ({
+export const fetchCurrentRoomSuccess = ({ room }) => ({
   type: FETCH_CURRENT_ROOM_SUCCESS,
   room,
 });
