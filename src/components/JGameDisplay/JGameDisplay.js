@@ -108,11 +108,13 @@ class Clue extends Component {
       timerPercent = (currentRoom.timer_seconds_elapsed / timerTotal_sec) * 100;
     }
 
+
     return (
       <div className="clue">
         {showMoney && <div className="money-text">${money}</div>}
         {showThisClueText && (
           <div className="clue-text">
+            ${money}
             {clueText}
             <ProgressBar
               className="clue-progress"
