@@ -21,19 +21,20 @@ class ScoreboardRow extends Component {
   render() {
     const { player, points, shadowPoints } = this.props;
 
+//<CanvasDraw
+//              hideGridX
+//              hideGridY
+//              saveData={player.image_blob}
+//              disabled
+//              canvasWidth={150} // This is the min allowed width
+//              canvasHeight={150} // This is the min allowed height
+//            />
+
     return (
       <div className="scoreboard-row">
         <div className="scoreboard-player-name">
           {player.registered_name || player.id}
           <div className="scoreboard-drawn-name">
-            <CanvasDraw
-              hideGridX
-              hideGridY
-              saveData={player.image_blob}
-              disabled
-              canvasWidth={150} // This is the min allowed width
-              canvasHeight={150} // This is the min allowed height
-            />
           </div>
         </div>
         <div className="scoreboard-player-values">

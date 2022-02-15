@@ -102,6 +102,16 @@ class JoinRoomView extends Component {
       goBack,
     } = this.state;
 
+
+//          <CanvasDraw
+//            ref={(canvasDraw) => (this.saveableCanvas = canvasDraw)}
+//            brushColor="black"
+//            lazyRadius={1}
+//            catenaryColor="white"
+//            brushRadius={3}
+//            hideGridX
+//            hideGridY
+//          />
     const joiningView = (
       <div className="joining-view">
         <div>
@@ -120,15 +130,6 @@ class JoinRoomView extends Component {
             placeholder="ENTER TEXT"
             value={typedPlayerName}
             onChange={this.onChangeTypedPlayerName}
-          />
-          <CanvasDraw
-            ref={(canvasDraw) => (this.saveableCanvas = canvasDraw)}
-            brushColor="black"
-            lazyRadius={1}
-            catenaryColor="white"
-            brushRadius={3}
-            hideGridX
-            hideGridY
           />
         </div>
         <div>
@@ -159,7 +160,7 @@ class JoinRoomView extends Component {
   joinRoom = () => {
     const { fetchCurrentUser, fetchCurrentRoom } = this.props;
     const { typedRoomCode, typedPlayerName } = this.state;
-    const canvasImageBlob = this.saveableCanvas.getSaveData();
+    const canvasImageBlob = null; // this.saveableCanvas.getSaveData();
     this.setState({ isLoadingRoom: true }, () => {
       api
         .joinRoom({
