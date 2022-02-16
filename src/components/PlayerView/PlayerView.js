@@ -146,6 +146,10 @@ class GradingForm extends Component {
     const { current_clue_id } = currentRoom;
 
     const text = submission ? submission.text : "(None)";
+    const fakeGuessSuffix =
+    submission && submission.is_fake_guess
+          ? "(fake guess)"
+          : "";
     const { clues } = jGameData;
     const currentClue = clues[current_clue_id];
     const { answer } = currentClue;
@@ -154,7 +158,7 @@ class GradingForm extends Component {
       <div className="grading-form">
         <div className="answer-comparison">
           <div className="correct-answer">Correct response: {answer}</div>
-          <div className="player-answer">Your response: {text}</div>
+          <div className="player-answer">Your response: {text} {fakeGuessSuffix}</div>
         </div>
         <div className="grading-buttons">
           <NiceButton onClick={() => this.giveGrade({ gradedAs: "correct" })}>

@@ -1,8 +1,6 @@
 - clue page (host view)
     - styling (spacing, sizing, layout, more contrast in color on timer)
 - grading page (host view)
-    - tell player they did fake guess
-    - remove money
     - styling (spacing, sizing, layout)
 - grading page (player view)
     - styling (spacing, sizing, layout)

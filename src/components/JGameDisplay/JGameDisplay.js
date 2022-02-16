@@ -69,10 +69,8 @@ class SubmissionSummary extends Component {
 
     return (
       <div className="submission-summary">
-        <div className="money-text">${current_clue_obj.money}</div>
         <div className="clue-text">{current_clue_obj.clue}</div>
         <div className="answer-text">{current_clue_obj.answer}</div>
-        <div className="player-submissions">{playerSubmissions}</div>
         <ProgressBar
           className="clue-progress"
           completed={timerPercent}
@@ -81,6 +79,7 @@ class SubmissionSummary extends Component {
           height="80px"
           width="700px"
         />
+        <div className="player-submissions">{playerSubmissions}</div>
       </div>
     );
   }
