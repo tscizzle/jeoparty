@@ -1,8 +1,2 @@
-- clue page (host view)
-    - styling (spacing, sizing, layout, more contrast in color on timer)
-- grading page (host view)
-    - styling (spacing, sizing, layout)
-- grading page (player view)
-    - styling (spacing, sizing, layout)
 - implement final jeopardy flow
 - do things in app.py that depend on prod vs dev

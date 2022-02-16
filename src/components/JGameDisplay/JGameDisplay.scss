@@ -20,15 +20,29 @@
     right: 0;
     bottom: 0;
     left: 0;
-    font-size: 3em;
+    padding: 100px;
     background-color: $jeopardyBlue;
     z-index: 10;
-  }
 
-  .answer-text {
-    font-size: 1.2em;
-    font-weight: bold;
-    margin: 20px;
+    .instruction-text {
+      font-size: 2em;
+      margin-bottom: 20px;
+    }
+
+    .clue-text,
+    .answer-text {
+      font-size: 3em;
+      margin-top: 30px;
+    }
+
+    .grading-progress {
+      margin-top: 50px;
+    }
+
+    .player-submissions {
+      font-size: 3em;
+      margin-top: 50px;
+    }
   }
 
   .j-round {
@@ -95,17 +109,21 @@
           .fullscreen-clue-category {
             font-size: 1.2em;
             font-weight: bold;
-            margin:20px
+            margin: 20px;
           }
 
           .fullscreen-clue-money {
-            font-size: .8em;
-            margin:15px
+            font-size: 0.8em;
+            margin: 15px;
           }
 
           .fullscreen-clue-text {
             font-size: 1em;
-            margin:20px;
+            margin: 20px;
+          }
+
+          .clue-progress {
+            margin-top: 50px;
           }
         }
       }
