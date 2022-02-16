@@ -30,7 +30,18 @@
     }
   }
 
+  .submitted-answer {
+    font-size: 3em;
+  }
+
+  .correct-answer,
+  .player-answer {
+    font-size: 2em;
+  }
+
   .graded-answer {
+    font-size: 3em;
+
     &.points-change-positive {
       color: $green;
     }
