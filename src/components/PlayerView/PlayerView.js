@@ -162,10 +162,10 @@ class GradingForm extends Component {
         </div>
         <div className="grading-buttons">
           <NiceButton onClick={() => this.giveGrade({ gradedAs: "correct" })}>
-            Correct
+            ✅ Correct
           </NiceButton>
           <NiceButton onClick={() => this.giveGrade({ gradedAs: "incorrect" })}>
-            Incorrect
+            ❌ Incorrect
           </NiceButton>
           <NiceButton onClick={() => this.giveGrade({ gradedAs: "blank" })}>
             Left it blank

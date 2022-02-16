@@ -44,6 +44,13 @@
     }
   }
 
+  .grading-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px;
+  }
+
   .pregame-message {
     text-align: center;
     font-size: 2em;

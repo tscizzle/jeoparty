@@ -69,6 +69,7 @@ class SubmissionSummary extends Component {
 
     return (
       <div className="submission-summary">
+        <div className="instruction-text"> Grade your response on your phone </div>
         <div className="clue-text">{current_clue_obj.clue}</div>
         <div className="answer-text">{current_clue_obj.answer}</div>
         <ProgressBar
