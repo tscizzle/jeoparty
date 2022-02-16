@@ -16,6 +16,9 @@ import withCurrentRoom from "state-management/state-connectors/with-current-room
 import withSubmissions from "state-management/state-connectors/with-submissions";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
+import NiceInput from "components/NiceInput/NiceInput";
+import NiceButton from "components/NiceButton/NiceButton";
+
 import "components/PlayerView/PlayerView.scss";
 
 class AnsweringForm extends Component {
@@ -38,21 +41,27 @@ class AnsweringForm extends Component {
 
     return (
       <div className="answering-form">
-        <input
+        <NiceInput
           placeholder="What is …"
           value={typedResponse}
           onChange={this.onChangeTypedResponse}
         />
-        <label>
-          <input
+        <label className="fake-guess">
+          <NiceInput
             type="checkbox"
             checked={isFakeGuess}
             onChange={this.onChangeIsFakeGuess}
           />
           Fake guess
         </label>
-        <button onClick={this.clickSubmit}>Submit</button>
-        <button onClick={this.clickPass}>Pass</button>
+        <div className="submission-buttons">
+          <NiceButton isPrimary={true} isBig={true} onClick={this.clickSubmit}>
+            Submit
+          </NiceButton>
+          <NiceButton isPrimary={true} isBig={true} onClick={this.clickPass}>
+            Pass
+          </NiceButton>
+        </div>
       </div>
     );
   }
@@ -148,15 +157,15 @@ class GradingForm extends Component {
           <div className="player-answer">Your response: {text}</div>
         </div>
         <div className="grading-buttons">
-          <button onClick={() => this.giveGrade({ gradedAs: "correct" })}>
+          <NiceButton onClick={() => this.giveGrade({ gradedAs: "correct" })}>
             Correct
-          </button>
-          <button onClick={() => this.giveGrade({ gradedAs: "incorrect" })}>
+          </NiceButton>
+          <NiceButton onClick={() => this.giveGrade({ gradedAs: "incorrect" })}>
             Incorrect
-          </button>
-          <button onClick={() => this.giveGrade({ gradedAs: "blank" })}>
+          </NiceButton>
+          <NiceButton onClick={() => this.giveGrade({ gradedAs: "blank" })}>
             Left it blank
-          </button>
+          </NiceButton>
         </div>
       </div>
     );
@@ -238,7 +247,8 @@ class PlayerView extends Component {
     const { currentUser, currentRoom, submissions } = this.props;
 
     const { id: user_id } = currentUser;
-    const { current_clue_id, current_clue_stage } = currentRoom;
+    const { has_game_been_started, current_clue_id, current_clue_stage } =
+      currentRoom;
 
     let currentSubmission;
     if (submissions) {
@@ -246,6 +256,14 @@ class PlayerView extends Component {
         .values()
         .find({ clue_id: current_clue_id, user_id });
     }
+    const pregameMessage = (
+      <p className="pregame-message">
+        Sit back and relax, Mother John! (and friends)
+        <br />
+        <br />
+        🎂
+      </p>
+    );
 
     const showAnsweringForm = Boolean(
       current_clue_id &&
@@ -266,6 +284,7 @@ class PlayerView extends Component {
         currentSubmission &&
         currentSubmission.graded_as
     );
+    const showPregameMessage = !has_game_been_started;
 
     return (
       <div className="player-view">
@@ -275,8 +294,9 @@ class PlayerView extends Component {
         )}
         {showGradingForm && <GradingForm submission={currentSubmission} />}
         {showGradedAnswer && <GradedAnswer submission={currentSubmission} />}
+        {showPregameMessage && pregameMessage}
         <div className="player-view-footer">
-          <button onClick={this.leaveRoom}>Leave Room</button>
+          <NiceButton onClick={this.leaveRoom}>Quit</NiceButton>
         </div>
       </div>
     );

@@ -10,6 +10,26 @@
   color: $white;
   background-color: $jeopardyBlue;
 
+  .answering-form {
+    display: flex;
+    flex-direction: column;
+
+    .fake-guess,
+    .submission-buttons {
+      margin-top: 50px;
+    }
+
+    .fake-guess {
+      display: flex;
+      align-items: center;
+    }
+
+    .submission-buttons {
+      display: flex;
+      justify-content: space-between;
+    }
+  }
+
   .graded-answer {
     &.points-change-positive {
       color: $green;
@@ -22,6 +42,12 @@
     &.points-change-neutral {
       color: $darkerGray;
     }
+  }
+
+  .pregame-message {
+    text-align: center;
+    font-size: 2em;
+    font-weight: 200;
   }
 
   .player-view-footer {

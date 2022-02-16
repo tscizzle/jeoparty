@@ -1,0 +1,203 @@
+@import "../../vars";
+
+.nice-button-container {
+  display: inline-block;
+  border-radius: 3px;
+  background-color: $white;
+
+  &.big-button-container {
+    border-radius: 8px;
+  }
+}
+
+.nice-button {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 3px;
+  box-shadow: 1px 1px 1px $gray;
+  background-color: $lightest;
+  color: $darker;
+  font-size: 15px;
+  outline: none;
+
+  &:not(:disabled) {
+    cursor: pointer;
+
+    &:hover {
+      background-color: $lighter;
+    }
+
+    &:active {
+      background-color: $light;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &.primary-button {
+    background-color: $blue;
+    color: $lightest;
+
+    &:hover:not(:disabled) {
+      background-color: $hoverBlue;
+    }
+
+    &:active:not(:disabled) {
+      background-color: $activeBlue;
+    }
+  }
+
+  &.secondary-button {
+    background-color: $green;
+    color: $lightest;
+
+    &:hover:not(:disabled) {
+      background-color: $hoverGreen;
+    }
+
+    &:active:not(:disabled) {
+      background-color: $activeGreen;
+    }
+  }
+
+  &.big-button {
+    padding: 10px 25px;
+    border-radius: 8px;
+    font-size: 30px;
+  }
+
+  .button-loading {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.circle-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2em;
+  height: 2em;
+  border-radius: 1em;
+  background-color: transparent;
+  color: $dark;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $light;
+  }
+
+  &:active {
+    background-color: $lightGray;
+  }
+
+  &.red-circle {
+    color: $darkRed;
+
+    &:hover {
+      background-color: $activeRed;
+    }
+
+    &:active {
+      background-color: $hoverRed;
+    }
+  }
+
+  &.blue-circle {
+    color: $darkBlue;
+
+    &:hover {
+      background-color: $activeBlue;
+    }
+
+    &:active {
+      background-color: $hoverBlue;
+    }
+  }
+
+  &.green-circle {
+    color: $darkGreen;
+
+    &:hover {
+      background-color: $activeGreen;
+    }
+
+    &:active {
+      background-color: $hoverGreen;
+    }
+  }
+
+  &.yellow-circle {
+    color: $darkYellow;
+
+    &:hover {
+      background-color: $activeYellow;
+    }
+
+    &:active {
+      background-color: $hoverYellow;
+    }
+  }
+
+  &.orange-circle {
+    color: $darkOrange;
+
+    &:hover {
+      background-color: $activeOrange;
+    }
+
+    &:active {
+      background-color: $hoverOrange;
+    }
+  }
+
+  &.purple-circle {
+    color: $darkPurple;
+
+    &:hover {
+      background-color: $activePurple;
+    }
+
+    &:active {
+      background-color: $hoverPurple;
+    }
+  }
+
+  &.dark-circle {
+    color: $white;
+
+    &:hover {
+      background-color: $darkGray;
+    }
+
+    &:active {
+      background-color: $gray;
+    }
+  }
+
+  &.small-circle-button {
+    font-size: 0.85em;
+  }
+}
+
+.link-button {
+  display: inline;
+  font-size: 0.8em;
+  color: $blue;
+  cursor: pointer;
+
+  &:active {
+    color: $activeBlue;
+  }
+}

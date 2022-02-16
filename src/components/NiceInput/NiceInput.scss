@@ -1,0 +1,51 @@
+@import "../../vars";
+
+.nice-input-container {
+  display: inline-flex;
+  position: relative;
+
+  &.full-input-container {
+    width: 100%;
+  }
+
+  &.checkbox-input-container {
+    font-size: 0.85em;
+    cursor: pointer;
+
+    input {
+      cursor: pointer;
+    }
+  }
+
+  .nice-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: none;
+    border-bottom: solid 2px transparent;
+    border-radius: 0px;
+    background-color: $lightest;
+    color: $dark;
+    font-size: 1em;
+    outline: none;
+
+    &:focus {
+      border-color: $blue;
+    }
+
+    &[type="number"] {
+      padding: 7px 2px 7px 10px;
+    }
+
+    &[type="checkbox"] {
+      width: 1em;
+    }
+
+    &.bold-input {
+      font-weight: bold;
+    }
+
+    &.full-input.nice-textarea {
+      resize: vertical;
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import CanvasDraw from "react-canvas-draw";
+// import CanvasDraw from "react-canvas-draw";
 
 import PropTypes from "prop-types";
 
@@ -8,6 +8,10 @@ import api from "api";
 import { userShape } from "prop-shapes";
 import withCurrentUser from "state-management/state-connectors/with-current-user";
 import withCurrentRoom from "state-management/state-connectors/with-current-room";
+
+import Loading from "components/Loading/Loading";
+import NiceButton from "components/NiceButton/NiceButton";
+import NiceInput from "components/NiceInput/NiceInput";
 
 import "components/LandingView/LandingView.scss";
 
@@ -22,37 +26,86 @@ class LandingView extends Component {
 
   state = {
     isJoiningRoom: false,
+    typedRoomCode: "",
+    typedPlayerName: "",
+    roomCodeError: null,
     isLoadingRoom: false,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { isLoadingRoom, isJoiningRoom } = this.state;
+    const {
+      isJoiningRoom,
+      typedRoomCode,
+      typedPlayerName,
+      roomCodeError,
+      isLoadingRoom,
+    } = this.state;
 
     const landingView = (
       <div className="landing-view">
         <div>
-          <button onClick={this.createRoom}>Create New Room</button>
+          <NiceButton
+            className="create-room-button"
+            isPrimary={true}
+            isBig={true}
+            onClick={this.createRoom}
+          >
+            Create New Room
+          </NiceButton>
         </div>
         <div>
-          <button onClick={this.onClickJoinRoom}>Join Existing Room</button>
+          <NiceButton
+            className="join-room-button"
+            isPrimary={true}
+            isBig={true}
+            onClick={this.onClickJoinRoom}
+          >
+            Join Existing Room
+          </NiceButton>
         </div>
-        {isLoadingRoom && <div>Loading…</div>}
+        {isLoadingRoom && <Loading />}
       </div>
     );
+
+    const joiningView = (
+      <div className="joining-view">
+        <h2>ROOM CODE</h2>
+        <NiceInput
+          placeholder="ROOM CODE"
+          value={typedRoomCode}
+          onChange={this.onChangeTypedRoomCode}
+        />
+        {roomCodeError && (
+          <div className="room-code-error">{roomCodeError}</div>
+        )}
+        <h2>PLAYER NAME</h2>
+        <NiceInput
+          placeholder="PLAYER NAME"
+          value={typedPlayerName}
+          onChange={this.onChangeTypedPlayerName}
+        />
+        <div className="join-room-buttons-container">
+          <NiceButton isPrimary={true} isBig={true} onClick={this.joinRoom}>
+            Join Room
+          </NiceButton>
+          <NiceButton isBig={true} onClick={this.onClickGoBack}>
+            Go back
+          </NiceButton>
+        </div>
+        {isLoadingRoom && <Loading />}
+      </div>
+    );
+
     return (
       <div className="landing-view-container">
-        {isJoiningRoom ? <JoinRoomView /> : landingView}
+        {isJoiningRoom ? joiningView : landingView}
       </div>
     );
   }
 
   /* Helpers. */
-
-  onChangeTypedRoomCode = (evt) => {
-    this.setState({ typedRoomCode: evt.target.value.toUpperCase() });
-  };
 
   createRoom = () => {
     const { fetchCurrentUser, fetchCurrentRoom } = this.props;
@@ -72,89 +125,13 @@ class LandingView extends Component {
   onClickJoinRoom = () => {
     this.setState({ isJoiningRoom: true });
   };
-}
-
-class JoinRoomView extends Component {
-  static propTypes = {
-    /* supplied by withCurrentUser */
-    currentUser: userShape,
-    fetchCurrentUser: PropTypes.func.isRequired,
-    /* supplied by withCurrentRoom */
-    fetchCurrentRoom: PropTypes.func.isRequired,
-  };
-
-  state = {
-    goBack: false,
-    typedRoomCode: "",
-    roomCodeError: null,
-    isLoadingRoom: false,
-    typedPlayerName: "",
-  };
-
-  /* Lifecycle methods. */
-
-  render() {
-    const {
-      typedRoomCode,
-      roomCodeError,
-      isLoadingRoom,
-      typedPlayerName,
-      goBack,
-    } = this.state;
-
-
-//          <CanvasDraw
-//            ref={(canvasDraw) => (this.saveableCanvas = canvasDraw)}
-//            brushColor="black"
-//            lazyRadius={1}
-//            catenaryColor="white"
-//            brushRadius={3}
-//            hideGridX
-//            hideGridY
-//          />
-    const joiningView = (
-      <div className="joining-view">
-        <div>
-          <h1>Joining a Room</h1>
-          <h2>ROOM CODE</h2>
-          <input
-            placeholder="ENTER TEXT"
-            value={typedRoomCode}
-            onChange={this.onChangeTypedRoomCode}
-          />
-          {roomCodeError && (
-            <div className="room-code-error">{roomCodeError}</div>
-          )}
-          <h2>PLAYER NAME</h2>
-          <input
-            placeholder="ENTER TEXT"
-            value={typedPlayerName}
-            onChange={this.onChangeTypedPlayerName}
-          />
-        </div>
-        <div>
-          <button onClick={this.joinRoom}> Join Room </button>
-          <button onClick={this.onClickGoBack}>Go back</button>
-        </div>
-        {isLoadingRoom && <div>Loading…</div>}
-      </div>
-    );
-
-    return goBack ? <LandingView /> : joiningView;
-  }
-
-  /* Helpers. */
-
-  onChangeTypedPlayerName = (evt) => {
-    this.setState({ typedPlayerName: evt.target.value.toUpperCase() });
-  };
-
-  onClickGoBack = (evt) => {
-    this.setState({ goBack: true });
-  };
 
   onChangeTypedRoomCode = (evt) => {
     this.setState({ typedRoomCode: evt.target.value.toUpperCase() });
+  };
+
+  onChangeTypedPlayerName = (evt) => {
+    this.setState({ typedPlayerName: evt.target.value.toUpperCase() });
   };
 
   joinRoom = () => {
@@ -180,12 +157,13 @@ class JoinRoomView extends Component {
         });
     });
   };
+
+  onClickGoBack = (evt) => {
+    this.setState({ isJoiningRoom: false });
+  };
 }
 
 LandingView = withCurrentUser(LandingView);
 LandingView = withCurrentRoom(LandingView);
-
-JoinRoomView = withCurrentUser(JoinRoomView);
-JoinRoomView = withCurrentRoom(JoinRoomView);
 
 export default LandingView;

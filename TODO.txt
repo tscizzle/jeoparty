@@ -1,14 +1,10 @@
-- optimize everything for mobile (starting with main screen)
-- when game created but not started
-    - waiting message in PlayerView after joined
-    - joined player names big and nice in HostView
-- clue page
-    - category
-    - more contrast in color on timer
-- grading page
-    - tell player they did shadow
-- after grading, HostView show everyone's submissions and grades
+- clue page (host view)
+    - styling (spacing, sizing, layout, more contrast in color on timer)
+- grading page (host view)
+    - tell player they did fake guess
+    - remove money
+    - styling (spacing, sizing, layout)
+- grading page (player view)
+    - styling (spacing, sizing, layout)
 - implement final jeopardy flow
 - do things in app.py that depend on prod vs dev
-- be able to leave room from any screen in host view
-

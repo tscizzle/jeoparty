@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import classNames from "classnames";
 import _ from "lodash";
 
 import api from "api";
@@ -10,6 +11,8 @@ import withCurrentRoom from "state-management/state-connectors/with-current-room
 import withPlayers from "state-management/state-connectors/with-players";
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 
+import Loading from "components/Loading/Loading";
+import NiceButton from "components/NiceButton/NiceButton";
 import JGameDisplay from "components/JGameDisplay/JGameDisplay";
 import Scoreboard from "components/Scoreboard/Scoreboard";
 import jeopardyBackground from "assets/jeopardy_background.jpg";
@@ -36,7 +39,9 @@ class LobbyView extends Component {
     const playerList = _(players)
       .values()
       .map((player) => (
-        <div key={player.id}>{player.registered_name || player.id}</div>
+        <div className="player-in-lobby" key={player.id}>
+          {player.registered_name || player.id}
+        </div>
       ))
       .value();
 
@@ -45,9 +50,14 @@ class LobbyView extends Component {
     return (
       <div className="lobby-view">
         <div className="player-list">{playerList}</div>
-        <button onClick={this.startGame} disabled={!canStartGame}>
+        <NiceButton
+          isPrimary={true}
+          isBig={true}
+          onClick={this.startGame}
+          isDisabled={!canStartGame}
+        >
           Start Game
-        </button>
+        </NiceButton>
       </div>
     );
   }
@@ -94,14 +104,20 @@ class HostControls extends Component {
     const { currentRoom } = this.props;
     const { isLoadingLeavingRoom } = this.state;
 
+    const { room_code, has_game_been_started } = currentRoom;
+
+    const hostControlsClasses = classNames("host-controls", {
+      "has-game-been-started": has_game_been_started,
+    });
+
     return (
-      <div className="host-controls">
+      <div className={hostControlsClasses}>
         <label>ROOM CODE</label>
-        <b className="room-code">{currentRoom.room_code}</b>
-        <button className="leave-room-button" onClick={this.leaveRoom}>
-          Leave Room
-        </button>
-        {isLoadingLeavingRoom && <div>Loading…</div>}
+        <b className="room-code">{room_code}</b>
+        <NiceButton isPrimary={true} onClick={this.leaveRoom}>
+          Quit
+        </NiceButton>
+        {isLoadingLeavingRoom && <Loading />}
       </div>
     );
   }
@@ -146,7 +162,7 @@ class HostView extends Component {
         className="host-view"
         style={{ backgroundImage: `url(${jeopardyBackground})` }}
       >
-        {showLoading && <div>Loading…</div>}
+        {showLoading && <Loading />}
         {showGame ? <JGameDisplay /> : <LobbyView />}
         {showGame && <Scoreboard />}
         <HostControls />

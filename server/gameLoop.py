@@ -6,9 +6,10 @@ from server.db import JeopartyDb
 
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
-CLUE_PREPARE_TIME = 3
+CLUE_PREPARE_TIME = 8
 RESPONSE_TIME_LIMIT = 50
-GRADING_TIME_LIMIT = 15
+GRADING_TIME_LIMIT = 30
+CLUE_FINISHED_TIME = 1
 
 
 #####
@@ -88,6 +89,8 @@ def run_next_clue(clue_id, db, room_id):
         INSERT INTO {JeopartyDb.REACHED_CLUE} (clue_id, room_id) VALUES (%s, %s);
     """
     db.execute_and_commit(insert_reached_clue_query, (clue_id, room_id))
+
+    time.sleep(CLUE_FINISHED_TIME)
 
 
 def get_next_clue_id(db, room_id, source_game_id, round_type):

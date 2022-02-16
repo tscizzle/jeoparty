@@ -8,6 +8,7 @@ import withSubmissions from "state-management/state-connectors/with-submissions"
 import withJGameData from "state-management/state-connectors/with-j-game-data";
 import RoomUpdateChecker from "background-tasks/room-update-checker";
 
+import Loading from "components/Loading/Loading";
 import HostView from "components/HostView/HostView";
 import PlayerView from "components/PlayerView/PlayerView";
 
@@ -39,7 +40,7 @@ class InRoomView extends Component {
 
     return (
       <div className="in-game">
-        {showLoading && <div>Loading…</div>}
+        {showLoading && <Loading />}
         {showHostView && <HostView />}
         {showPlayerView && <PlayerView />}
       </div>

@@ -3,7 +3,7 @@
 .host-view {
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: center;
   width: 100vw;
   height: 100vh;
   color: $white;
@@ -21,14 +21,33 @@
     box-shadow: 10px 10px 10px $darkest;
     background-color: $lighter;
     color: $darkest;
-    font-size: 4em;
+    z-index: 15;
 
-    .room-code {
-      font-size: 2em;
+    &:not(.has-game-been-started) {
+      font-size: 4em;
     }
 
-    .leave-room-button {
-      margin-top: 10px;
+    .room-code {
+      margin-bottom: 15px;
+      font-size: 2em;
+    }
+  }
+
+  .lobby-view {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+    padding-bottom: 100px;
+
+    .player-list {
+      margin-bottom: 30px;
+
+      .player-in-lobby {
+        font-size: 6em;
+        font-weight: 200;
+      }
     }
   }
 }

@@ -5,7 +5,7 @@ export const userShape = PropTypes.shape({
   browser_id: PropTypes.string.isRequired,
   room_id: PropTypes.number,
   is_host: PropTypes.bool,
-  name: PropTypes.string,
+  registered_name: PropTypes.string,
   image_blob: PropTypes.string,
 });
 
