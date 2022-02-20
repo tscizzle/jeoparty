@@ -4,12 +4,14 @@ import traceback
 
 from server.db import JeopartyDb
 
+
 WHILE_LOOP_SLEEP = 1
 GAME_START_TIME_LIMIT = 3600
-CLUE_PREPARE_TIME = 5
+GAME_PREPARE_TIME = 10
+CLUE_PREPARE_TIME = 1
 RESPONSE_TIME_LIMIT = 50
 GRADING_TIME_LIMIT = 30
-CLUE_FINISHED_TIME = 1
+CLUE_FINISHED_TIME = 5
 
 
 #####
@@ -25,6 +27,8 @@ def game_loop(room_id):
         wait_for_game_to_be_started(db, room_id)
 
         source_game_id = get_source_game_id_for_room(db, room_id)
+
+        time.sleep(GAME_PREPARE_TIME)
 
         for round_type in ["single", "double", "final"]:
             while next_clue_id := get_next_clue_id(

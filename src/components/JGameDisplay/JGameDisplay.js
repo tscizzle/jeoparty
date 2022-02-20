@@ -72,10 +72,6 @@ class SubmissionSummary extends Component {
         <div className="instruction-text">
           Grade your response on your phone
         </div>
-        <div className="clue-text">{current_clue_obj.clue}</div>
-        <div className="answer-text">
-          Correct answer: <b>{current_clue_obj.answer}</b>
-        </div>
         <ProgressBar
           className="grading-progress"
           completed={timerPercent}
@@ -84,6 +80,10 @@ class SubmissionSummary extends Component {
           height="80px"
           width="700px"
         />
+        <div className="clue-text">{current_clue_obj.clue}</div>
+        <div className="answer-text">
+          Correct answer: <b>{current_clue_obj.answer}</b>
+        </div>
         <div className="player-submissions">{playerSubmissions}</div>
       </div>
     );
@@ -139,7 +139,7 @@ class Clue extends Component {
           <div className="fullscreen-clue">
             <div className="fullscreen-clue-category">{category.text}</div>
             <div className="fullscreen-clue-money">${money}</div>
-            <div classname="fullscreen-clue-text">{clueText}</div>
+            <div className="fullscreen-clue-text">{clueText}</div>
             <ProgressBar
               className="clue-progress"
               completed={timerPercent}
@@ -270,7 +270,7 @@ class JGameDisplay extends Component {
 
     return (
       <div className="j-game-display">
-        <h1 hidden>{tapedDate}</h1>
+        <div className="taped-date">Game from {tapedDate}</div>
         {showSubmissionSummary && <SubmissionSummary />}
         <JRound roundType={currentRound} />
       </div>
