@@ -27,7 +27,7 @@ class InRoomView extends Component {
     fetchJGameData: PropTypes.func.isRequired,
   };
 
-  UPDATE_CHECK_INTERVAL_sec = 1;
+  UPDATE_CHECK_INTERVAL_sec = 0.5;
 
   /* Lifecycle methods. */
 

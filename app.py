@@ -254,7 +254,6 @@ def grade_response():
     clue_id = request.json["clueId"]
     graded_as = request.json["gradedAs"]
 
-    # This combo insert-update is how SQLite does upserts.
     grade_response_query = f"""
         INSERT INTO {JeopartyDb.SUBMISSION}
         (user_id, clue_id, room_id, graded_as) VALUES (%s, %s, %s, %s)

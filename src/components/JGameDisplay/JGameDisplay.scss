@@ -45,6 +45,19 @@
     .player-submissions {
       font-size: 5vh;
       margin-top: 6vh;
+
+      .player-submission-row {
+        display: flex;
+        justify-content: space-between;
+
+        &.has-graded {
+          opacity: 0.5;
+        }
+
+        > *:not(:last-child) {
+          margin-right: 1vw;
+        }
+      }
     }
   }
 

@@ -119,9 +119,14 @@ class SubmittedAnswer extends Component {
     const { is_fake_guess } = submission;
 
     const fakeGuessText = is_fake_guess ? " (fake guess)" : "";
-    const displayText = submission.text
-      ? `${submission.text}${fakeGuessText}`
-      : "";
+    const displayText = submission.text ? (
+      <b>
+        {submission.text}
+        {fakeGuessText}
+      </b>
+    ) : (
+      <i>Passed</i>
+    );
 
     return <div className="submitted-answer">{displayText}</div>;
   }
@@ -129,37 +134,17 @@ class SubmittedAnswer extends Component {
 
 class GradingForm extends Component {
   static propTypes = {
-    submission: submissionShape,
     /* supplied by withCurrentRoom */
     currentRoom: roomShape.isRequired,
     /* supplied by withSubmissions */
     fetchSubmissions: PropTypes.func.isRequired,
-    /* supplied by withJGameData */
-    jGameData: jGameDataShape.isRequired,
   };
 
   /* Lifecycle methods. */
 
   render() {
-    const { submission, currentRoom, jGameData } = this.props;
-
-    const { current_clue_id } = currentRoom;
-
-    const text = submission ? submission.text : "(None)";
-    const fakeGuessSuffix =
-    submission && submission.is_fake_guess
-          ? "(fake guess)"
-          : "";
-    const { clues } = jGameData;
-    const currentClue = clues[current_clue_id];
-    const { answer } = currentClue;
-
     return (
       <div className="grading-form">
-        <div className="answer-comparison">
-          <div className="correct-answer">Correct response: {answer}</div>
-          <div className="player-answer">Your response: {text} {fakeGuessSuffix}</div>
-        </div>
         <div className="grading-buttons">
           <NiceButton onClick={() => this.giveGrade({ gradedAs: "correct" })}>
             ✅ Correct
@@ -250,7 +235,7 @@ class PlayerView extends Component {
   render() {
     const { currentUser, currentRoom, submissions } = this.props;
 
-    const { id: user_id } = currentUser;
+    const { id: user_id, registered_name } = currentUser;
     const { has_game_been_started, current_clue_id, current_clue_stage } =
       currentRoom;
 
@@ -262,12 +247,10 @@ class PlayerView extends Component {
     }
     const pregameMessage = (
       <p className="pregame-message">
-        Sit back and relax, Mother John! (and friends)
-        <br />
-        <br />
-        🎂
+        Hello, <b>{registered_name}</b>! The game will begin shortly.
       </p>
     );
+    const catchAllMessage = "J Party!";
 
     const showAnsweringForm = Boolean(
       current_clue_id &&
@@ -289,6 +272,13 @@ class PlayerView extends Component {
         currentSubmission.graded_as
     );
     const showPregameMessage = !has_game_been_started;
+    const showCatchallMessage = !(
+      showAnsweringForm ||
+      showSubmittedAnswer ||
+      showGradingForm ||
+      showGradedAnswer ||
+      showPregameMessage
+    );
 
     return (
       <div className="player-view">
@@ -296,9 +286,10 @@ class PlayerView extends Component {
         {showSubmittedAnswer && (
           <SubmittedAnswer submission={currentSubmission} />
         )}
-        {showGradingForm && <GradingForm submission={currentSubmission} />}
+        {showGradingForm && <GradingForm />}
         {showGradedAnswer && <GradedAnswer submission={currentSubmission} />}
         {showPregameMessage && pregameMessage}
+        {showCatchallMessage && catchAllMessage}
         <div className="player-view-footer">
           <NiceButton onClick={this.leaveRoom}>Quit</NiceButton>
         </div>

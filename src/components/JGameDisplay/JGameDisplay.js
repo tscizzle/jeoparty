@@ -1,8 +1,9 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import moment from "moment-timezone";
-import _ from "lodash";
+import classNames from "classnames";
 import ProgressBar from "@ramonak/react-progress-bar";
+import _ from "lodash";
 
 import {
   roomShape,
@@ -48,13 +49,19 @@ class SubmissionSummary extends Component {
     const playerSubmissions = _.map(_.values(players), (player) => {
       const playerSubmission = submissionsByPlayer[player.id];
       const submissionText = playerSubmission ? playerSubmission.text : "";
-      const fakeGuessSuffix =
-        playerSubmission && playerSubmission.is_fake_guess
-          ? "(fake guess)"
-          : "";
+      const submissionElement =
+        playerSubmission && playerSubmission.is_fake_guess ? (
+          <i>{submissionText} (fake guess)</i>
+        ) : (
+          <div>{submissionText}</div>
+        );
+      const playerSubmissionRowClasses = classNames("player-submission-row", {
+        "has-graded": playerSubmission && playerSubmission.graded_as,
+      });
       return (
-        <div key={player.id}>
-          {player.registered_name}: {submissionText} {fakeGuessSuffix}
+        <div className={playerSubmissionRowClasses} key={player.id}>
+          <div>{player.registered_name}:</div>
+          {submissionElement}
         </div>
       );
     });

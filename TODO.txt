@@ -1,2 +1,9 @@
+- make Submit button take up half screen
+- when text input is empty, have submit button say "Pass", when it's not empty have it say "Submit"
+- have it say ("Submit (fake guess)" if fake guess)
+- have little "X" button to clear your answer (the word "Clear" above the "X" maybe)
+- question also show on the phone (not sure if this will fit nicely)
+- show on host view who has answered so far
+- 3 big 1/3 screen buttons for grading
 - implement final jeopardy flow
 - do things in app.py that depend on prod vs dev

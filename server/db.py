@@ -4,7 +4,7 @@ import psycopg2.extras
 
 
 class JeopartyDb:
-    """Object that represents a connection to our SQLite db."""
+    """Object that represents a connection to our Postgres db."""
 
     SCHEMA = "jeoparty"
     # Table names
@@ -36,14 +36,12 @@ class JeopartyDb:
     def execute_and_commit(self, *execute_args):
         """Execute a SQL command and commit to the db.
 
-        :param *executeArgs: Same params as `sqlite3.Cursor.execute` (first param is SQL
-            string, second is tuple if SQL params), or of `sqlite3.Cursor.executescript`
-            (which is just the SQL string, no params) if doExecuteScript is True. SQL
-            string is probs an INSERT or UPDATE or something that writes to the db.
+        :param *executeArgs: Same params as `psycopg2.Cursor.execute` (first param is
+            SQL string, second is tuple if SQL params). SQL string is probs an INSERT or
+            UPDATE or something that writes to the db.
 
         :return int lastRowId: Integer primary key of the last row inserted with this
-            Cursor. If there is no explicitly defined primary key column, SQLite's
-            implicit "rowid" column is used.
+            Cursor.
 
         """
         cur = self.conn.cursor()
@@ -61,14 +59,14 @@ class JeopartyDb:
     def execute_and_fetch(self, *execute_args, do_fetch_one=False):
         """Execute a SQL query and fetch the results.
 
-        :param *executeArgs: Same params as `sqlite3.Cursor.execute` (first param is SQL
-            string, second is tuple if SQL args). SQL string is probs a SELECT or
+        :param *executeArgs: Same params as `psycopg2.Cursor.execute` (first param is
+            SQL string, second is tuple if SQL args). SQL string is probs a SELECT or
             something that reads from the db.
-        :param bool do_fetch_one: If True, use the method `fetchOne` instead of `fetchAll`
-            when retrieving resuls of the query.
+        :param bool do_fetch_one: If True, use the method `fetchOne` instead of
+            `fetchAll` when retrieving resuls of the query.
 
-        :return sqlite3.Row[]: (if doFetchOne is False)
-        :return sqlite3.Row|None: (if doFetchOne is True)
+        :return dict[]: (if doFetchOne is False)
+        :return dict|None: (if doFetchOne is True)
         """
         cur = self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
