@@ -133,7 +133,7 @@ class JarchiveParser:
         final_answer = (
             BeautifulSoup(answer_html_str_bw_parens, "lxml")
             .find("html")
-            .find("em", {"class": '\\"correct_response\\"'})
+            .find("em", {"class": "correct_response"})
             .text
         )
         return [
