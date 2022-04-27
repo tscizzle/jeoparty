@@ -1,3 +1,4 @@
+- allow selecting a decade
 - make Submit button take up half screen
 - when text input is empty, have submit button say "Pass", when it's not empty have it say "Submit"
 - have it say ("Submit (fake guess)" if fake guess)

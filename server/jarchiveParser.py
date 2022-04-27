@@ -1,3 +1,4 @@
+import re
 import random
 import requests
 from bs4 import BeautifulSoup
@@ -9,7 +10,14 @@ class JarchiveParser:
         html = requests.get(all_seasons_url).content
         soup = BeautifulSoup(html, "lxml")
         season_html_urls = soup.find("div", {"id": "content"}).findAll("a")
-        random_season_html_url = random.choice(season_html_urls)
+        earliest_season = 27  # ~2010
+        latest_season = 36  # ~2019
+        season_html_urls_in_range = [
+            s
+            for s in season_html_urls
+            if self.is_season_within_range(s.text, earliest_season, latest_season)
+        ]
+        random_season_html_url = random.choice(season_html_urls_in_range)
 
         season_url = f"https://www.j-archive.com/{random_season_html_url.get('href')}"
         single_season_html = requests.get(season_url).content
@@ -30,6 +38,20 @@ class JarchiveParser:
                 if "title" in random_episode_html_url.attrs
                 else None,
             }
+
+    def is_season_within_range(self, season_str, earliest_season, latest_season):
+        pattern = re.compile("Season (\d+)")
+        result = pattern.search(season_str)
+
+        if result is None:
+            # The season name is not even of the regular form "Season X".
+            return False
+
+        # The season name is of the regular form "Season X". Extract X and check if it
+        # is within the years we want.
+        season_num_str = result.group(1)
+        season_num = int(season_num_str)
+        return earliest_season <= season_num <= latest_season
 
     def get_category_info(self, first_row, round_type):
         category_info = []
@@ -170,5 +192,5 @@ class JarchiveParser:
         }
 
 
-# if __name__ == '__main__':
+# if __name__ == "__main__":
 #     random_game_info = JarchiveParser().parse()
